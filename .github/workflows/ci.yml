@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
-  build-and-test:
+  setup:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -17,6 +17,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+          cache: 'pip'
 
       - name: Install dependencies
         run: |
@@ -24,15 +25,90 @@ jobs:
           source .venv/bin/activate
           pip install --upgrade pip
           pip install -r requirements.txt
+          pip install black isort flake8 mypy pytest pytest-cov pytest-mock pytest-asyncio
+
+      - name: Cache dependencies
+        uses: actions/cache/save@v4
+        with:
+          path: .venv
+          key: ${{ runner.os }}-venv-${{ hashFiles('**/requirements.txt') }}
+
+  lint-format:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Restore dependencies
+        uses: actions/cache/restore@v4
+        with:
+          path: .venv
+          key: ${{ runner.os }}-venv-${{ hashFiles('**/requirements.txt') }}
 
       - name: Lint with black and isort
         run: |
           source .venv/bin/activate
-          pip install black isort
-          black --check src tests
-          isort --check-only src tests
+          black --check database-agent/src database-agent/tests
+          isort --check-only database-agent/src database-agent/tests
 
-      - name: Run tests
+  lint-style:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Restore dependencies
+        uses: actions/cache/restore@v4
+        with:
+          path: .venv
+          key: ${{ runner.os }}-venv-${{ hashFiles('**/requirements.txt') }}
+
+      - name: Lint with flake8
         run: |
           source .venv/bin/activate
-          make test 
+          flake8 database-agent/src database-agent/tests
+
+  type-check:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Restore dependencies
+        uses: actions/cache/restore@v4
+        with:
+          path: .venv
+          key: ${{ runner.os }}-venv-${{ hashFiles('**/requirements.txt') }}
+
+      - name: Type check with mypy
+        run: |
+          source .venv/bin/activate
+          mypy database-agent/src
+
+  test:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Restore dependencies
+        uses: actions/cache/restore@v4
+        with:
+          path: .venv
+          key: ${{ runner.os }}-venv-${{ hashFiles('**/requirements.txt') }}
+
+      - name: Run tests with coverage
+        run: |
+          source .venv/bin/activate
+          cd database-agent
+          pytest -c ../pytest.ini -vv --cov=src --cov-report=xml
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./database-agent/coverage.xml
+          fail_ci_if_error: true 

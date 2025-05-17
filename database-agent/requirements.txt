@@ -1,0 +1,16 @@
+fastapi
+uvicorn
+openai
+qdrant-client>=1.1.1
+sentence-transformers>=2.2.2
+PyGithub
+requests
+python-dotenv>=1.0.0
+pytest
+pytest-mock
+numpy
+pydantic
+typing-extensions>=4.5.0
+pytest-cov
+black
+isort 
