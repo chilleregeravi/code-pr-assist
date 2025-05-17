@@ -1,4 +1,5 @@
 import os
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -11,4 +12,4 @@ COLLECTION_NAME = os.getenv("COLLECTION_NAME", "pr_cache")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4")
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openai")  # 'openai' or 'ollama'
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
-OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama2") 
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama2")

@@ -1,10 +1,14 @@
 import logging
+
 import openai
 import requests
-from .config import OPENAI_API_KEY, OPENAI_MODEL, LLM_PROVIDER, OLLAMA_URL, OLLAMA_MODEL
+
+from .config import (LLM_PROVIDER, OLLAMA_MODEL, OLLAMA_URL, OPENAI_API_KEY,
+                     OPENAI_MODEL)
 
 openai.api_key = OPENAI_API_KEY
 logger = logging.getLogger(__name__)
+
 
 def gpt_summarize_with_context(pr_text, similar_contexts):
     """Summarize PR and suggest labels using OpenAI GPT or Ollama with context."""
@@ -23,8 +27,8 @@ New PR:
                 model=OPENAI_MODEL,
                 messages=[
                     {"role": "system", "content": "You assist with GitHub PR reviews."},
-                    {"role": "user", "content": prompt}
-                ]
+                    {"role": "user", "content": prompt},
+                ],
             )
             return response.choices[0].message.content.strip()
         except Exception as e:
@@ -36,10 +40,12 @@ New PR:
                 "model": OLLAMA_MODEL,
                 "messages": [
                     {"role": "system", "content": "You assist with GitHub PR reviews."},
-                    {"role": "user", "content": prompt}
-                ]
+                    {"role": "user", "content": prompt},
+                ],
             }
-            resp = requests.post(f"{OLLAMA_URL}/v1/chat/completions", json=payload, timeout=60)
+            resp = requests.post(
+                f"{OLLAMA_URL}/v1/chat/completions", json=payload, timeout=60
+            )
             resp.raise_for_status()
             data = resp.json()
             if "choices" in data and data["choices"]:
@@ -54,4 +60,4 @@ New PR:
             return "[Error: Could not generate summary from Ollama.]"
     else:
         logger.error(f"Unknown LLM_PROVIDER: {LLM_PROVIDER}")
-        return "[Error: Unknown LLM provider configured.]" 
+        return "[Error: Unknown LLM provider configured.]"

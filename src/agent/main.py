@@ -1,17 +1,20 @@
 # main.py
+import logging
+
+import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-import logging
-import uvicorn
-from .models import PullRequestData
-from .llm_utils import gpt_summarize_with_context
+
 from .github_utils import post_comment_to_pr
+from .llm_utils import gpt_summarize_with_context
+from .models import PullRequestData
 from .qdrant_utils import embed_text, search_similar_prs, upsert_pr
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
+
 
 @app.post("/webhook")
 async def handle_pr_webhook(request: Request):
@@ -26,13 +29,16 @@ async def handle_pr_webhook(request: Request):
         required_fields = ["title", "body", "number", "diff_url"]
         if not all(field in pr_info for field in required_fields):
             logger.error("Missing required PR fields in webhook payload.")
-            return JSONResponse(content={"status": "error", "message": "Missing PR fields"}, status_code=400)
+            return JSONResponse(
+                content={"status": "error", "message": "Missing PR fields"},
+                status_code=400,
+            )
 
         pr = PullRequestData(
             title=pr_info["title"],
             body=pr_info["body"],
             number=pr_info["number"],
-            diff_url=pr_info["diff_url"]
+            diff_url=pr_info["diff_url"],
         )
 
         full_text = f"Title: {pr.title}\n\n{pr.body}"
@@ -51,10 +57,15 @@ async def handle_pr_webhook(request: Request):
         except Exception as e:
             logger.error(f"Failed to upsert PR to Qdrant: {e}")
 
-        return JSONResponse(content={"status": "processed", "summary": summary}, status_code=200)
+        return JSONResponse(
+            content={"status": "processed", "summary": summary}, status_code=200
+        )
     except Exception as e:
         logger.error(f"Webhook processing failed: {e}")
-        return JSONResponse(content={"status": "error", "message": str(e)}, status_code=500)
+        return JSONResponse(
+            content={"status": "error", "message": str(e)}, status_code=500
+        )
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
