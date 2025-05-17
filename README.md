@@ -180,13 +180,11 @@ You can pull the Docker images for `database-agent` and `github-agent` from the 
 ### Database Agent
 
 ```bash
-docker pull ghcr.io/${{ github.repository }}/database-agent:latest
+docker pull ghcr.io/chilleregeravi/code-pr-assist/database-agent:latest
 ```
 
 ### GitHub Agent
 
 ```bash
-docker pull ghcr.io/${{ github.repository }}/github-agent:latest
+docker pull ghcr.io/chilleregeravi/code-pr-assist/github-agent:latest
 ```
-
-Replace `${{ github.repository }}` with your actual GitHub repository name (e.g., `username/repo`).
