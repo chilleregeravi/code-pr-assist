@@ -22,8 +22,7 @@ jobs:
       - name: Install dependencies
         working-directory: database-agent
         run: |
-          ln -s ../Makefile.common Makefile
-          make venv
+          make -f ../Makefile.common venv
 
       - name: Cache dependencies
         uses: actions/cache/save@v4
@@ -46,11 +45,10 @@ jobs:
       - name: Install dependencies
         working-directory: github-agent
         run: |
-          ln -s ../Makefile.common Makefile
-          make venv
+          make -f ../Makefile.common venv
 
       - name: Cache dependencies
-        uses: actions/cache/save@v4
+        uses: actions/cache/restore@v4
         with:
           path: .venv
           key: ${{ runner.os }}-github-agent-venv-${{ hashFiles('**/requirements.txt') }}
@@ -72,7 +70,7 @@ jobs:
         working-directory: database-agent
         run: |
           source ../.venv/bin/activate
-          make lint-check-all
+          make -f ../Makefile.common lint-check-all
 
       - name: Run type checking
         working-directory: database-agent
@@ -84,7 +82,7 @@ jobs:
         working-directory: database-agent
         run: |
           source ../.venv/bin/activate
-          make test
+          make -f ../Makefile.common test
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
@@ -109,7 +107,7 @@ jobs:
         working-directory: github-agent
         run: |
           source ../.venv/bin/activate
-          make lint-check-all
+          make -f ../Makefile.common lint-check-all
 
       - name: Run type checking
         working-directory: github-agent
@@ -121,7 +119,7 @@ jobs:
         working-directory: github-agent
         run: |
           source ../.venv/bin/activate
-          make test
+          make -f ../Makefile.common test
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
