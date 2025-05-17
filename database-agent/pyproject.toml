@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "database-agent"
+version = "0.1.0"
+authors = [
+    { name = "Ravi Chillerega", email = "chilleregeravi@gmail.com" },
+]
+description = "A database agent for processing and storing PR data"
+requires-python = ">=3.8"
+dependencies = [
+    "qdrant-client",
+    "sentence-transformers",
+    "PyGithub",
+    "numpy",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.pytest.ini_options]
+testpaths = ["src/tests"]
+python_files = ["test_*.py"]
+addopts = "-v --cov=database_agent" 

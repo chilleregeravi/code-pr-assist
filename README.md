@@ -2,6 +2,20 @@
 
 A GitHub Pull Request assistant that uses LLMs (OpenAI or Ollama), Qdrant vector search, and GitHub API to summarize PRs, suggest labels, and comment automatically.
 
+## Table of Contents
+
+- [Features](#features)
+- [Requirements](#requirements)
+- [Setup](#setup)
+- [Running the Agent](#running-the-agent)
+- [Running Tests](#running-tests)
+- [Continuous Integration](#continuous-integration)
+- [Project Structure](#project-structure)
+- [Database Agent](#database-agent)
+- [Extending](#extending)
+- [License](#license)
+- [Pulling Docker Images from ghcr.io](#pulling-docker-images-from-ghcrio)
+
 ## Features
 
 - Summarizes new PRs using OpenAI or Ollama LLMs
@@ -87,12 +101,68 @@ make test
 
 ```
 code-pr-assist/
-  src/agent/           # Main agent code
-  tests/               # All test files
-  requirements.txt     # Python dependencies
-  makefile             # Common dev commands
-  .github/workflows/   # CI pipeline
+├── database-agent/         # Handles PR data validation, transformation, and storage in Qdrant
+├── github-agent/           # Handles GitHub API interactions and PR event processing
+├── docs/                   # Documentation files
+├── .github/                # GitHub workflows and configurations
+├── .gitignore              # Git ignore file
+├── .flake8                 # Flake8 configuration
+├── mypy.ini                # MyPy configuration
+├── pytest.ini              # Pytest configuration
+├── pyproject.toml          # Project metadata
+├── Makefile.common         # Common dev commands for all agents
+├── CONTRIBUTING.md         # Contribution guidelines
+└── LICENSE                 # License file
 ```
+
+## Database Agent
+
+The **database-agent** is responsible for validating, transforming, and storing pull request (PR) data in a Qdrant vector database. It provides:
+- Data validation and transformation utilities for PRs
+- Batch and single PR processing
+- Integration with Qdrant for vector storage and search
+- Utilities for deleting, searching, and retrieving PRs
+
+### Setup
+
+1. Navigate to the `database-agent` directory:
+   ```bash
+   cd database-agent
+   ```
+2. Create and activate a virtual environment (recommended):
+   ```bash
+   python3.11 -m venv .venv
+   source .venv/bin/activate
+   ```
+3. Install dependencies:
+   ```bash
+   pip install --upgrade pip
+   pip install -r requirements.txt
+   ```
+
+### Development Commands
+
+- **Run lint and formatting checks:**
+  ```bash
+  make -f ../Makefile.common lint-check-all
+  ```
+- **Run tests:**
+  ```bash
+  make -f ../Makefile.common test
+  ```
+- **Auto-format code:**
+  ```bash
+  make -f ../Makefile.common format
+  ```
+- **Type checking:**
+  ```bash
+  source .venv/bin/activate
+  mypy src
+  ```
+
+### Usage
+
+The database-agent is designed to be used as a library/module by other agents (such as the GitHub agent) or as part of a larger workflow. See the code in `database-agent/src/database_agent/` for entry points and API.
 
 ## Extending
 
@@ -102,3 +172,19 @@ code-pr-assist/
 ## License
 
 See [LICENSE](LICENSE).
+
+## Pulling Docker Images from ghcr.io
+
+You can pull the Docker images for `database-agent` and `github-agent` from the GitHub Container Registry (ghcr.io) using the following commands:
+
+### Database Agent
+
+```bash
+docker pull ghcr.io/chilleregeravi/database-agent:latest
+```
+
+### GitHub Agent
+
+```bash
+docker pull ghcr.io/chilleregeravi/github-agent:latest
+```

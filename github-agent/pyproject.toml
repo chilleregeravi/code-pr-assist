@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "github_agent"
+version = "0.1.0"
+authors = [
+    { name = "Ravi Chillerega", email = "chilleregeravi@gmail.com" },
+]
+description = "A GitHub agent for processing pull requests"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "pydantic",
+    "python-dotenv",
+    "PyGithub",
+    "openai",
+    "qdrant-client",
+    "sentence-transformers",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "pytest-mock",
+    "pytest-asyncio",
+    "pylint",
+    "ruff",
+    "mypy",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+packages = ["github_agent"] 

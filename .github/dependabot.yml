@@ -1,0 +1,53 @@
+version: 2
+updates:
+  # Enable version updates for database-agent
+  - package-ecosystem: "pip"
+    directory: "/database-agent"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "python"
+      - "database-agent"
+    reviewers:
+      - "chilleregeravi"
+    versioning-strategy: "auto"
+    open-pull-requests-limit: 10
+    groups:
+      dependencies:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: "pip"
+      include: "scope"
+    allow:
+      - dependency-type: "all"
+    security-updates-only: false
+    pull-request-branch-name:
+      separator: "-"
+
+  # Enable version updates for github-agent
+  - package-ecosystem: "pip"
+    directory: "/github-agent"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "python"
+      - "github-agent"
+    reviewers:
+      - "chilleregeravi"
+    versioning-strategy: "auto"
+    open-pull-requests-limit: 10
+    groups:
+      dependencies:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: "pip"
+      include: "scope"
+    allow:
+      - dependency-type: "all"
+    security-updates-only: false
+    pull-request-branch-name:
+      separator: "-" 

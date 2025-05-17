@@ -1,0 +1,46 @@
+# Makefile for CAG PR Agent with venv and auto-install
+.PHONY: venv run lint format clean test lint-check-all lint-diff type-check
+VERSION_PYTHON=python3.11
+VENV_ACTIVATE = . .venv/bin/activate
+
+.PHONY: venv run lint format clean test
+
+venv:
+	$(VERSION_PYTHON) -m venv .venv
+	$(VENV_ACTIVATE)
+	.venv/bin/$(VERSION_PYTHON) -m pip install --upgrade pip
+	.venv/bin/$(VERSION_PYTHON) -m pip install pylint ruff pytest pytest-cov pytest-mock pylint pytest-asyncio mypy
+	.venv/bin/$(VERSION_PYTHON) -m pip install -r requirements.txt
+
+run: 
+	$(VENV_ACTIVATE)
+	echo "" > log.txt
+	DEBUG="yes" .venv/bin/$(VERSION_PYTHON) -m src.$(subst -,_,$(notdir $(shell pwd))).__init__ | tee log.txt
+
+lint: venv
+	$(VENV_DIR)/bin/black . && $(VENV_DIR)/bin/isort .
+
+format: lint
+
+clean:
+	find . -type d -name "__pycache__" -exec rm -r {} +
+	rm -rf $(VENV_DIR)
+
+test:
+	$(VENV_ACTIVATE)
+	.venv/bin/pytest -c ../pytest.ini -vv --cov=src --cov-report=xml:coverage.xml
+
+lint-check-all:
+	$(VENV_ACTIVATE)
+	.venv/bin/black --check src src/tests
+	.venv/bin/isort --check-only src src/tests
+	.venv/bin/flake8 src src/tests
+
+lint-diff:
+	$(VENV_ACTIVATE)
+	.venv/bin/black --check --diff src src/tests
+	.venv/bin/isort --check-only --diff src src/tests
+
+type-check:
+	$(VENV_ACTIVATE)
+	.venv/bin/mypy src

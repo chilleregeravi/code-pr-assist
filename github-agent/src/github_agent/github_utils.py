@@ -1,8 +1,7 @@
 import logging
 
 from github import Github
-
-from .config import GITHUB_TOKEN, REPO_NAME
+from github_agent.config import GITHUB_TOKEN, REPO_NAME
 
 logger = logging.getLogger(__name__)
 

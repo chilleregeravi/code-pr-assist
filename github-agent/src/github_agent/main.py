@@ -4,11 +4,10 @@ import logging
 import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-
-from .github_utils import post_comment_to_pr
-from .llm_utils import gpt_summarize_with_context
-from .models import PullRequestData
-from .qdrant_utils import embed_text, search_similar_prs, upsert_pr
+from github_agent.github_utils import post_comment_to_pr
+from github_agent.llm_utils import gpt_summarize_with_context
+from github_agent.models import PullRequestData
+from github_agent.qdrant_utils import embed_text, search_similar_prs, upsert_pr
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
