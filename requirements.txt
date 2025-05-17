@@ -12,3 +12,5 @@ numpy
 pydantic
 typing-extensions
 pytest-cov
+black
+isort 
