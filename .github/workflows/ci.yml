@@ -27,8 +27,8 @@ jobs:
       - name: Cache dependencies
         uses: actions/cache/save@v4
         with:
-          path: .venv
-          key: ${{ runner.os }}-database-agent-venv-${{ hashFiles('**/requirements.txt') }}
+          path: database-agent/.venv
+          key: ${{ runner.os }}-database-agent-venv-${{ hashFiles('database-agent/requirements.txt') }}
 
   setup-github-agent:
     runs-on: ubuntu-latest
@@ -48,10 +48,10 @@ jobs:
           make -f ../Makefile.common venv
 
       - name: Cache dependencies
-        uses: actions/cache/restore@v4
+        uses: actions/cache/save@v4
         with:
-          path: .venv
-          key: ${{ runner.os }}-github-agent-venv-${{ hashFiles('**/requirements.txt') }}
+          path: github-agent/.venv
+          key: ${{ runner.os }}-github-agent-venv-${{ hashFiles('github-agent/requirements.txt') }}
 
   database-agent-checks:
     needs: setup-database-agent
@@ -60,28 +60,34 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
       - name: Restore dependencies
         uses: actions/cache/restore@v4
         with:
-          path: .venv
-          key: ${{ runner.os }}-database-agent-venv-${{ hashFiles('**/requirements.txt') }}
+          path: database-agent/.venv
+          key: ${{ runner.os }}-database-agent-venv-${{ hashFiles('database-agent/requirements.txt') }}
 
       - name: Run linting and formatting checks
         working-directory: database-agent
         run: |
-          source ../.venv/bin/activate
+          source .venv/bin/activate
           make -f ../Makefile.common lint-check-all
 
       - name: Run type checking
         working-directory: database-agent
         run: |
-          source ../.venv/bin/activate
+          source .venv/bin/activate
           mypy src
 
       - name: Run tests with coverage
         working-directory: database-agent
         run: |
-          source ../.venv/bin/activate
+          source .venv/bin/activate
           make -f ../Makefile.common test
 
       - name: Upload coverage to Codecov
@@ -97,28 +103,34 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
       - name: Restore dependencies
         uses: actions/cache/restore@v4
         with:
-          path: .venv
-          key: ${{ runner.os }}-github-agent-venv-${{ hashFiles('**/requirements.txt') }}
+          path: github-agent/.venv
+          key: ${{ runner.os }}-github-agent-venv-${{ hashFiles('github-agent/requirements.txt') }}
 
       - name: Run linting and formatting checks
         working-directory: github-agent
         run: |
-          source ../.venv/bin/activate
+          source .venv/bin/activate
           make -f ../Makefile.common lint-check-all
 
       - name: Run type checking
         working-directory: github-agent
         run: |
-          source ../.venv/bin/activate
+          source .venv/bin/activate
           mypy src
 
       - name: Run tests with coverage
         working-directory: github-agent
         run: |
-          source ../.venv/bin/activate
+          source .venv/bin/activate
           make -f ../Makefile.common test
 
       - name: Upload coverage to Codecov
