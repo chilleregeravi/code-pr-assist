@@ -17,9 +17,14 @@ mock_qdrant.collection_exists.return_value = True
 mock_model = MockSentenceTransformer.return_value
 mock_model.encode.return_value = np.array([[1, 2, 3]])
 
-from agent.qdrant_utils import (embed_text, ensure_collection_exists,
-                                get_model, get_qdrant, search_similar_prs,
-                                upsert_pr)
+from agent.qdrant_utils import (
+    embed_text,
+    ensure_collection_exists,
+    get_model,
+    get_qdrant,
+    search_similar_prs,
+    upsert_pr,
+)
 
 
 def teardown_module(module):
