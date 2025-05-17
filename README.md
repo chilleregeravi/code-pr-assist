@@ -87,12 +87,63 @@ make test
 
 ```
 code-pr-assist/
-  src/agent/           # Main agent code
-  tests/               # All test files
-  requirements.txt     # Python dependencies
-  makefile             # Common dev commands
-  .github/workflows/   # CI pipeline
+  database-agent/         # Handles PR data validation, transformation, and storage in Qdrant
+  github-agent/           # Handles GitHub API interactions and PR event processing
+  src/agent/              # Main agent code (legacy or shared)
+  tests/                  # All test files
+  requirements.txt        # Python dependencies
+  Makefile.common         # Common dev commands for all agents
+  .github/workflows/      # CI pipeline
 ```
+
+## Database Agent
+
+The **database-agent** is responsible for validating, transforming, and storing pull request (PR) data in a Qdrant vector database. It provides:
+- Data validation and transformation utilities for PRs
+- Batch and single PR processing
+- Integration with Qdrant for vector storage and search
+- Utilities for deleting, searching, and retrieving PRs
+
+### Setup
+
+1. Navigate to the `database-agent` directory:
+   ```bash
+   cd database-agent
+   ```
+2. Create and activate a virtual environment (recommended):
+   ```bash
+   python3.11 -m venv .venv
+   source .venv/bin/activate
+   ```
+3. Install dependencies:
+   ```bash
+   pip install --upgrade pip
+   pip install -r requirements.txt
+   ```
+
+### Development Commands
+
+- **Run lint and formatting checks:**
+  ```bash
+  make -f ../Makefile.common lint-check-all
+  ```
+- **Run tests:**
+  ```bash
+  make -f ../Makefile.common test
+  ```
+- **Auto-format code:**
+  ```bash
+  make -f ../Makefile.common format
+  ```
+- **Type checking:**
+  ```bash
+  source .venv/bin/activate
+  mypy src
+  ```
+
+### Usage
+
+The database-agent is designed to be used as a library/module by other agents (such as the GitHub agent) or as part of a larger workflow. See the code in `database-agent/src/database_agent/` for entry points and API.
 
 ## Extending
 

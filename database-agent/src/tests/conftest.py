@@ -1,20 +1,25 @@
 """Shared test fixtures for database agent tests."""
 
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
 from database_agent.database_agent import DatabaseAgent
+
 
 @pytest.fixture
 def mock_qdrant_url():
     return "http://localhost:6333"
 
+
 @pytest.fixture
 def mock_qdrant_api_key():
     return "test-api-key"
 
+
 @pytest.fixture
 def mock_github_token():
     return "test-github-token"
+
 
 @pytest.fixture
 def mock_vector_store():
@@ -25,7 +30,7 @@ def mock_vector_store():
         store.store_prs_batch.return_value = True
         store.search_similar_prs.return_value = [
             {"id": 1, "score": 0.9},
-            {"id": 2, "score": 0.8}
+            {"id": 2, "score": 0.8},
         ]
         store.get_pr.return_value = {
             "id": 1,
@@ -35,11 +40,12 @@ def mock_vector_store():
             "created_at": "2024-01-01T00:00:00Z",
             "updated_at": "2024-01-01T00:00:00Z",
             "labels": ["test"],
-            "comments": ["test comment"]
+            "comments": ["test comment"],
         }
         store.delete_pr.return_value = True
         store.delete_collection.return_value = True
         yield store
+
 
 @pytest.fixture
 def mock_github_client():
@@ -57,20 +63,16 @@ def mock_github_client():
         pr.get_comments.return_value = [MagicMock(body="test comment")]
         repo.get_pulls.return_value = [pr]
         client.get_repo.return_value = repo
-        yield client 
+        yield client
+
 
 @pytest.fixture(scope="session")
 def test_config():
     """Provide a test configuration dictionary."""
-    return {
-        "log_level": "INFO",
-        "database": {
-            "type": "test",
-            "url": "test://database"
-        }
-    }
+    return {"log_level": "INFO", "database": {"type": "test", "url": "test://database"}}
+
 
 @pytest.fixture(scope="session")
 def database_agent(test_config):
     """Create a DatabaseAgent instance with test configuration."""
-    return DatabaseAgent(config=test_config) 
+    return DatabaseAgent(config=test_config)

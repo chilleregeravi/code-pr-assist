@@ -2,16 +2,16 @@
 
 __version__ = "0.1.0"
 
+from .database_agent import DatabaseAgent
 from .exceptions import (
     DataValidationError,
     EmbeddingError,
     PRProcessingError,
-    VectorStoreError
+    VectorStoreError,
 )
-from .vector_store import VectorStore
-from .pr_processor import PRProcessor
 from .github_client import GitHubClient
-from .database_agent import DatabaseAgent
+from .pr_processor import PRProcessor
+from .vector_store import VectorStore
 
 __all__ = [
     "DatabaseAgent",
@@ -21,5 +21,5 @@ __all__ = [
     "VectorStoreError",
     "VectorStore",
     "PRProcessor",
-    "GitHubClient"
-] 
+    "GitHubClient",
+]

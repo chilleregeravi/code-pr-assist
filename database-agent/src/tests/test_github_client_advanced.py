@@ -1,6 +1,8 @@
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
 from database_agent.github_client import GitHubClient, PRProcessingError
+
 
 @pytest.fixture
 def github_client():
@@ -34,13 +36,17 @@ def github_client():
         mock_instance.get_repo.return_value = repo
         yield client
 
+
 def test_get_pr_data_success(github_client):
     data = github_client.get_pr_data("owner/repo", 1)
     assert data["id"] == 1
     assert data["title"] == "Test PR"
     assert data["author"] == "testuser"
     assert data["comments"] == ["test comment"]
-    assert data["labels"] == [label.name for label in github_client.client.get_repo().get_pull().labels]
+    assert data["labels"] == [
+        label.name for label in github_client.client.get_repo().get_pull().labels
+    ]
+
 
 def test_get_pr_data_error():
     with patch("database_agent.github_client.Github") as mock:
@@ -50,10 +56,12 @@ def test_get_pr_data_error():
         with pytest.raises(Exception):
             client.get_pr_data("owner/repo", 1)
 
+
 def test_get_repo_prs_limit(github_client):
     prs = list(github_client.get_repo_prs("owner/repo", limit=1))
     assert len(prs) == 1
     assert prs[0]["id"] == 1
+
 
 def test_process_and_store_prs_batches():
     with patch("database_agent.github_client.Github") as mock:
@@ -71,13 +79,14 @@ def test_process_and_store_prs_batches():
         # Should call process_and_store_pr 3 times (once per PR)
         assert pr_processor.process_and_store_pr.call_count == 3
 
+
 def test_search_prs_with_and_without_repo_name():
     with patch("database_agent.github_client.Github"):
         client = GitHubClient(token="test-token")
         pr_processor = MagicMock()
         pr_processor.search_similar_prs.return_value = [
             {"payload": {"repo_name": "owner/repo"}},
-            {"payload": {"repo_name": "other/repo"}}
+            {"payload": {"repo_name": "other/repo"}},
         ]
         # Without repo_name filter
         results = client.search_prs(pr_processor, "query")
@@ -86,6 +95,7 @@ def test_search_prs_with_and_without_repo_name():
         results = client.search_prs(pr_processor, "query", repo_name="owner/repo")
         assert len(results) == 1
         assert results[0]["payload"]["repo_name"] == "owner/repo"
+
 
 def test_process_repository_prs_calls_processor():
     with patch("database_agent.github_client.Github"):
@@ -101,10 +111,11 @@ def test_process_repository_prs_calls_processor():
         client.process_repository_prs("owner/repo", processor)
         processor.process_pr.assert_called_once_with({"id": 1})
 
+
 def test_process_repository_prs_error():
     with patch("database_agent.github_client.Github"):
         client = GitHubClient(token="test-token")
         client.get_pull_requests = MagicMock(side_effect=Exception("fail"))
         processor = MagicMock()
         with pytest.raises(PRProcessingError):
-            client.process_repository_prs("owner/repo", processor) 
+            client.process_repository_prs("owner/repo", processor)

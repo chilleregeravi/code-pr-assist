@@ -31,7 +31,12 @@ test:
 	.venv/bin/pytest -c ../pytest.ini -vv
 
 lint-check-all:
-	.venv/bin/$(VERSION_PYTHON) && black --check src tests && isort --check-only src tests && flake8 src tests
+	$(VENV_ACTIVATE)
+	.venv/bin/black --check src src/tests
+	.venv/bin/isort --check-only src src/tests
+	.venv/bin/flake8 src src/tests
 
 lint-diff:
-	.venv/bin/$(VERSION_PYTHON) && black --check --diff src tests && isort --check-only --diff src tests
+	$(VENV_ACTIVATE)
+	.venv/bin/black --check --diff src src/tests
+	.venv/bin/isort --check-only --diff src src/tests
