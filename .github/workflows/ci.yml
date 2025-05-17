@@ -166,8 +166,8 @@ jobs:
       - name: Push database-agent image to ghcr.io
         working-directory: database-agent
         run: |
-          docker tag database-agent:test ghcr.io/chilleregeravi/code-pr-assist/database-agent:latest
-          docker push ghcr.io/chilleregeravi/code-pr-assist/database-agent:latest
+          docker tag database-agent:test ghcr.io/chilleregeravi/database-agent:latest
+          docker push ghcr.io/chilleregeravi/database-agent:latest
 
   build-github-agent:
     needs: github-agent-checks
@@ -195,5 +195,5 @@ jobs:
       - name: Push github-agent image to ghcr.io
         working-directory: github-agent
         run: |
-          docker tag github-agent:test ghcr.io/chilleregeravi/code-pr-assist/github-agent:latest
-          docker push ghcr.io/chilleregeravi/code-pr-assist/github-agent:latest 
+          docker tag github-agent:test ghcr.io/chilleregeravi/github-agent:latest
+          docker push ghcr.io/chilleregeravi/github-agent:latest 
