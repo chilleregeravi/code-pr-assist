@@ -24,12 +24,12 @@ class VectorStore(ABC):
         """Initialize the vector store connection and collections."""
 
     @abstractmethod
-    def store_pr(self, pr_data: Dict[str, Any]) -> None:
-        """Store PR data in the vector store."""
+    def store_pr(self, pr_data: Dict[str, Any]) -> bool:
+        """Store PR data in the vector store. Returns True on success."""
 
     @abstractmethod
-    def store_prs_batch(self, prs_data: List[Dict[str, Any]]) -> None:
-        """Store multiple PRs in the vector store."""
+    def store_prs_batch(self, prs_data: List[Dict[str, Any]]) -> bool:
+        """Store multiple PRs in the vector store. Returns True on success."""
 
     @abstractmethod
     def search_similar_prs(self, query: str, limit: int = 5) -> List[Dict[str, Any]]:
@@ -40,12 +40,12 @@ class VectorStore(ABC):
         """Retrieve a specific PR by ID."""
 
     @abstractmethod
-    def delete_pr(self, pr_id: int) -> None:
-        """Delete a specific PR from the vector store."""
+    def delete_pr(self, pr_id: int) -> bool:
+        """Delete a specific PR from the vector store. Returns True on success."""
 
     @abstractmethod
-    def delete_collection(self) -> None:
-        """Delete the entire collection."""
+    def delete_collection(self) -> bool:
+        """Delete the entire collection. Returns True on success."""
 
 
 class QdrantStore(VectorStore):
@@ -97,6 +97,8 @@ class QdrantStore(VectorStore):
             collection_names = [collection.name for collection in collections]
 
             if self.collection_name not in collection_names:
+                if self.vector_size is None:
+                    raise ConfigurationError("Vector size is not set")
                 collection_config = models.VectorParams(
                     size=self.vector_size, distance=models.Distance.COSINE
                 )
@@ -209,6 +211,8 @@ class QdrantStore(VectorStore):
                 return None
             payload = result[0].payload
             # Return a dict with id and title for test compatibility
+            if payload is None:
+                return {"id": pr_id, "title": ""}
             return {"id": pr_id, "title": payload.get("title", "")}
         except Exception as e:
             raise VectorStoreError(f"Failed to retrieve PR: {str(e)}")

@@ -204,7 +204,7 @@ class PRProcessor:
             transformed = self.transform_pr_data(pr_data)
             return self.vector_store.store_pr(transformed)
         except Exception as e:
-            raise PRProcessingError(str(e))
+            raise PRProcessingError(f"Failed to process PR: {str(e)}")
 
     def process_prs_batch(self, prs_data: List[Dict[str, Any]]) -> bool:
         """Process multiple PRs in batch and store them in the vector store."""
@@ -212,11 +212,13 @@ class PRProcessor:
             processed = [self.transform_pr_data(pr) for pr in prs_data]
             return self.vector_store.store_prs_batch(processed)
         except Exception as e:
-            raise PRProcessingError(str(e))
+            raise PRProcessingError(f"Failed to process PRs batch: {str(e)}")
 
     def process_repository_prs(self, repo_name: str) -> bool:
         """Process all PRs from a repository and store them in the vector store."""
         try:
+            if self.github_client is None:
+                raise PRProcessingError("GitHub client not initialized")
             prs = self.github_client.get_pull_requests(repo_name)
             prs_data = [
                 {
@@ -229,4 +231,4 @@ class PRProcessor:
             ]
             return self.process_prs_batch(prs_data)
         except Exception as e:
-            raise PRProcessingError(str(e))
+            raise PRProcessingError(f"Failed to process repository PRs: {str(e)}")

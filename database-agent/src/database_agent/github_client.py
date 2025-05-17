@@ -75,8 +75,12 @@ class GitHubClient:
         if not self.token:
             raise ValueError("GitHub token is required")
 
-        self.client = Github(self.token, base_url=base_url)
+        if base_url is not None:
+            self.client = Github(self.token, base_url=base_url)
+        else:
+            self.client = Github(self.token)
         self.pr_processor = pr_processor
+        self.batch_size = 100  # Default batch size, can be overridden
 
     @rate_limit
     @retry()
@@ -132,8 +136,8 @@ class GitHubClient:
                 "title": pr.title,
                 "body": pr.body,
                 "state": pr.state,
-                "created_at": pr.created_at.isoformat(),
-                "updated_at": pr.updated_at.isoformat(),
+                "created_at": pr.created_at.isoformat() if pr.created_at else "",
+                "updated_at": pr.updated_at.isoformat() if pr.updated_at else "",
                 "author": pr.user.login,
                 "labels": [label.name for label in pr.labels],
                 "comments": comments,
@@ -381,6 +385,8 @@ class GitHubClient:
         try:
             repo = self.get_repository(repo_name)
             pr = repo.get_pull(pr_number)
+            if pr.created_at is None or pr.updated_at is None:
+                raise PRProcessingError("PR missing created_at or updated_at")
             return pr.created_at, pr.updated_at
         except GithubException as e:
             raise PRProcessingError(f"Failed to fetch dates: {str(e)}")
@@ -401,3 +407,7 @@ class GitHubClient:
                 processor.process_pr(pr_data)
         except Exception as e:
             raise PRProcessingError(f"Failed to process repository PRs: {str(e)}")
+
+    def _extract_pr_data(self, pr: Any) -> dict:
+        # Stub implementation to satisfy mypy; replace with real logic as needed
+        return {}

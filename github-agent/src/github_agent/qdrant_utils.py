@@ -1,11 +1,10 @@
 import logging
 
 import numpy as np
+from github_agent.config import COLLECTION_NAME, QDRANT_URL
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, PointStruct, VectorParams
 from sentence_transformers import SentenceTransformer
-
-from .config import COLLECTION_NAME, QDRANT_URL
 
 logger = logging.getLogger(__name__)
 

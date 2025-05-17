@@ -2,8 +2,13 @@ import logging
 
 import openai
 import requests
-
-from .config import LLM_PROVIDER, OLLAMA_MODEL, OLLAMA_URL, OPENAI_API_KEY, OPENAI_MODEL
+from github_agent.config import (
+    LLM_PROVIDER,
+    OLLAMA_MODEL,
+    OLLAMA_URL,
+    OPENAI_API_KEY,
+    OPENAI_MODEL,
+)
 
 openai.api_key = OPENAI_API_KEY
 logger = logging.getLogger(__name__)
