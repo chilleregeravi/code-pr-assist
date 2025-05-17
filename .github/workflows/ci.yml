@@ -90,12 +90,6 @@ jobs:
           source .venv/bin/activate
           make -f ../Makefile.common test
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
-        with:
-          file: ./database-agent/coverage.xml
-          fail_ci_if_error: true
-
   github-agent-checks:
     needs: setup-github-agent
     runs-on: ubuntu-latest
@@ -131,10 +125,4 @@ jobs:
         working-directory: github-agent
         run: |
           source .venv/bin/activate
-          make -f ../Makefile.common test
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
-        with:
-          file: ./github-agent/coverage.xml
-          fail_ci_if_error: true 
+          make -f ../Makefile.common test 
