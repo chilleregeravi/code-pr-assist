@@ -20,8 +20,8 @@ jobs:
           cache: 'pip'
 
       - name: Install dependencies
+        working-directory: database-agent
         run: |
-          cd database-agent
           make venv
 
       - name: Cache dependencies
@@ -43,8 +43,8 @@ jobs:
           cache: 'pip'
 
       - name: Install dependencies
+        working-directory: github-agent
         run: |
-          cd github-agent
           make venv
 
       - name: Cache dependencies
