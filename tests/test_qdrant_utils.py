@@ -70,4 +70,4 @@ def test_get_model_error():
 def test_get_qdrant_error():
     with patch("agent.qdrant_utils.QdrantClient", side_effect=Exception("fail")):
         with pytest.raises(Exception):
-            get_qdrant() 
+            get_qdrant()
