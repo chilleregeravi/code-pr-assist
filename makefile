@@ -26,3 +26,9 @@ clean:
 
 test: venv
 	PYTHONPATH=src $(VENV_DIR)/bin/pytest --cov=src --cov-report=term-missing tests/
+
+lint-check-all:
+	. .venv/bin/activate && black --check src tests && isort --check-only src tests && flake8 src tests
+
+lint-diff:
+	. .venv/bin/activate && black --check --diff src tests && isort --check-only --diff src tests

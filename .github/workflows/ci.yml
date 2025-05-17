@@ -25,6 +25,13 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Lint with black and isort
+        run: |
+          source .venv/bin/activate
+          pip install black isort
+          black --check src tests
+          isort --check-only src tests
+
       - name: Run tests
         run: |
           source .venv/bin/activate
