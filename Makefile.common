@@ -1,6 +1,6 @@
 # Makefile for CAG PR Agent with venv and auto-install
 .PHONY: venv run lint format clean test lint-check-all lint-diff
-VERSION_PYTHON=python3.13
+VERSION_PYTHON=python3.11
 VENV_ACTIVATE = . .venv/bin/activate
 
 .PHONY: venv run lint format clean test
