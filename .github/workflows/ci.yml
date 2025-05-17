@@ -22,6 +22,7 @@ jobs:
       - name: Install dependencies
         working-directory: database-agent
         run: |
+          ln -s ../Makefile.common Makefile
           make venv
 
       - name: Cache dependencies
@@ -45,6 +46,7 @@ jobs:
       - name: Install dependencies
         working-directory: github-agent
         run: |
+          ln -s ../Makefile.common Makefile
           make venv
 
       - name: Cache dependencies
@@ -67,21 +69,21 @@ jobs:
           key: ${{ runner.os }}-database-agent-venv-${{ hashFiles('**/requirements.txt') }}
 
       - name: Run linting and formatting checks
+        working-directory: database-agent
         run: |
-          source .venv/bin/activate
-          cd database-agent
+          source ../.venv/bin/activate
           make lint-check-all
 
       - name: Run type checking
+        working-directory: database-agent
         run: |
-          source .venv/bin/activate
-          cd database-agent
+          source ../.venv/bin/activate
           mypy src
 
       - name: Run tests with coverage
+        working-directory: database-agent
         run: |
-          source .venv/bin/activate
-          cd database-agent
+          source ../.venv/bin/activate
           make test
 
       - name: Upload coverage to Codecov
@@ -104,21 +106,21 @@ jobs:
           key: ${{ runner.os }}-github-agent-venv-${{ hashFiles('**/requirements.txt') }}
 
       - name: Run linting and formatting checks
+        working-directory: github-agent
         run: |
-          source .venv/bin/activate
-          cd github-agent
+          source ../.venv/bin/activate
           make lint-check-all
 
       - name: Run type checking
+        working-directory: github-agent
         run: |
-          source .venv/bin/activate
-          cd github-agent
+          source ../.venv/bin/activate
           mypy src
 
       - name: Run tests with coverage
+        working-directory: github-agent
         run: |
-          source .venv/bin/activate
-          cd github-agent
+          source ../.venv/bin/activate
           make test
 
       - name: Upload coverage to Codecov
