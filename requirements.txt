@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+openai
+qdrant-client
+sentence-transformers
+PyGithub
+requests
+python-dotenv
+pytest
+pytest-mock
+numpy
+pydantic
+typing-extensions
+pytest-cov
