@@ -1,7 +1,6 @@
 from unittest.mock import patch
 
 import pytest
-
 from github_agent.llm_utils import gpt_summarize_with_context
 
 
@@ -51,6 +50,6 @@ def test_gpt_summarize_with_context_ollama_error():
 def test_gpt_summarize_with_context_unknown_provider():
     with patch("github_agent.llm_utils.LLM_PROVIDER", "unknown"), patch(
         "openai.ChatCompletion.create"
-    ) as mock_create:
+    ):
         result = gpt_summarize_with_context("text", [])
         assert "Unknown LLM provider" in result or "Error" in result

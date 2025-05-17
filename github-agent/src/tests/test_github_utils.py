@@ -1,19 +1,17 @@
 import os
-
-os.environ["REPO_NAME"] = "dummy/repo"
-os.environ["GITHUB_TOKEN"] = "dummy"
-
 from unittest.mock import MagicMock, patch
 
 import pytest
+from github_agent.github_utils import get_repo, post_comment_to_pr
+
+os.environ["REPO_NAME"] = "dummy/repo"
+os.environ["GITHUB_TOKEN"] = "dummy"
 
 patcher_github = patch("github_agent.github_utils.Github")
 MockGithub = patcher_github.start()
 mock_github = MockGithub.return_value
 mock_repo = MagicMock()
 mock_github.get_repo.return_value = mock_repo
-
-from github_agent.github_utils import get_repo, post_comment_to_pr
 
 
 def teardown_module(module):

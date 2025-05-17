@@ -1,7 +1,6 @@
 import pytest
-from pydantic import ValidationError
-
 from github_agent.models import PullRequestData
+from pydantic import ValidationError
 
 
 def test_pull_request_data_fields():

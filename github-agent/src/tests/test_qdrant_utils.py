@@ -1,12 +1,19 @@
 import os
-
-os.environ["QDRANT_URL"] = "http://localhost:6333"
-os.environ["COLLECTION_NAME"] = "test_collection"
-
 from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
+from github_agent.qdrant_utils import (
+    embed_text,
+    ensure_collection_exists,
+    get_model,
+    get_qdrant,
+    search_similar_prs,
+    upsert_pr,
+)
+
+os.environ["QDRANT_URL"] = "http://localhost:6333"
+os.environ["COLLECTION_NAME"] = "test_collection"
 
 patcher_qdrant = patch("github_agent.qdrant_utils.QdrantClient")
 patcher_model = patch("github_agent.qdrant_utils.SentenceTransformer")
@@ -16,15 +23,6 @@ mock_qdrant = MockQdrantClient.return_value
 mock_qdrant.collection_exists.return_value = True
 mock_model = MockSentenceTransformer.return_value
 mock_model.encode.return_value = np.array([[1, 2, 3]])
-
-from github_agent.qdrant_utils import (
-    embed_text,
-    ensure_collection_exists,
-    get_model,
-    get_qdrant,
-    search_similar_prs,
-    upsert_pr,
-)
 
 
 def teardown_module(module):
@@ -83,7 +81,9 @@ def test_ensure_collection_exists_recreate():
 
 
 def test_get_model_error():
-    with patch("github_agent.qdrant_utils.SentenceTransformer", side_effect=Exception("fail")):
+    with patch(
+        "github_agent.qdrant_utils.SentenceTransformer", side_effect=Exception("fail")
+    ):
         with pytest.raises(Exception):
             get_model()
 

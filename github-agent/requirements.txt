@@ -13,4 +13,5 @@ pydantic
 typing-extensions
 pytest-cov
 black
-isort 
+isort
+flake8 
