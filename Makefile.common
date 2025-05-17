@@ -28,7 +28,7 @@ clean:
 
 test:
 	$(VENV_ACTIVATE)
-	.venv/bin/pytest -c ../pytest.ini -vv
+	.venv/bin/pytest -c ../pytest.ini -vv --cov=src --cov-report=xml:coverage.xml
 
 lint-check-all:
 	$(VENV_ACTIVATE)
