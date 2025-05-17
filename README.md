@@ -2,6 +2,20 @@
 
 A GitHub Pull Request assistant that uses LLMs (OpenAI or Ollama), Qdrant vector search, and GitHub API to summarize PRs, suggest labels, and comment automatically.
 
+## Table of Contents
+
+- [Features](#features)
+- [Requirements](#requirements)
+- [Setup](#setup)
+- [Running the Agent](#running-the-agent)
+- [Running Tests](#running-tests)
+- [Continuous Integration](#continuous-integration)
+- [Project Structure](#project-structure)
+- [Database Agent](#database-agent)
+- [Extending](#extending)
+- [License](#license)
+- [Pulling Docker Images from ghcr.io](#pulling-docker-images-from-ghcrio)
+
 ## Features
 
 - Summarizes new PRs using OpenAI or Ollama LLMs
@@ -87,13 +101,18 @@ make test
 
 ```
 code-pr-assist/
-  database-agent/         # Handles PR data validation, transformation, and storage in Qdrant
-  github-agent/           # Handles GitHub API interactions and PR event processing
-  src/agent/              # Main agent code (legacy or shared)
-  tests/                  # All test files
-  requirements.txt        # Python dependencies
-  Makefile.common         # Common dev commands for all agents
-  .github/workflows/      # CI pipeline
+├── database-agent/         # Handles PR data validation, transformation, and storage in Qdrant
+├── github-agent/           # Handles GitHub API interactions and PR event processing
+├── docs/                   # Documentation files
+├── .github/                # GitHub workflows and configurations
+├── .gitignore              # Git ignore file
+├── .flake8                 # Flake8 configuration
+├── mypy.ini                # MyPy configuration
+├── pytest.ini              # Pytest configuration
+├── pyproject.toml          # Project metadata
+├── Makefile.common         # Common dev commands for all agents
+├── CONTRIBUTING.md         # Contribution guidelines
+└── LICENSE                 # License file
 ```
 
 ## Database Agent
@@ -153,3 +172,21 @@ The database-agent is designed to be used as a library/module by other agents (s
 ## License
 
 See [LICENSE](LICENSE).
+
+## Pulling Docker Images from ghcr.io
+
+You can pull the Docker images for `database-agent` and `github-agent` from the GitHub Container Registry (ghcr.io) using the following commands:
+
+### Database Agent
+
+```bash
+docker pull ghcr.io/${{ github.repository }}/database-agent:latest
+```
+
+### GitHub Agent
+
+```bash
+docker pull ghcr.io/${{ github.repository }}/github-agent:latest
+```
+
+Replace `${{ github.repository }}` with your actual GitHub repository name (e.g., `username/repo`).

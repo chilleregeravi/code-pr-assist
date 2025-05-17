@@ -156,6 +156,19 @@ jobs:
         run: |
           docker build -t database-agent:test .
 
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push database-agent image to ghcr.io
+        working-directory: database-agent
+        run: |
+          docker tag database-agent:test ghcr.io/${{ github.repository }}/database-agent:latest
+          docker push ghcr.io/${{ github.repository }}/database-agent:latest
+
   build-github-agent:
     needs: github-agent-checks
     runs-on: ubuntu-latest
@@ -170,4 +183,17 @@ jobs:
       - name: Build github-agent image
         working-directory: github-agent
         run: |
-          docker build -t github-agent:test . 
+          docker build -t github-agent:test .
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push github-agent image to ghcr.io
+        working-directory: github-agent
+        run: |
+          docker tag github-agent:test ghcr.io/${{ github.repository }}/github-agent:latest
+          docker push ghcr.io/${{ github.repository }}/github-agent:latest 
