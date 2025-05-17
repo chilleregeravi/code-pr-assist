@@ -1,0 +1,33 @@
+# Test files
+**/tests/
+**/test_*.py
+**/conftest.py
+**/pytest.ini
+
+# Development files
+.git/
+.gitignore
+.env
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo 
