@@ -125,4 +125,36 @@ jobs:
         working-directory: github-agent
         run: |
           source .venv/bin/activate
-          make -f ../Makefile.common test 
+          make -f ../Makefile.common test
+
+  build-database-agent:
+    needs: database-agent-checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and test database-agent image
+        working-directory: database-agent
+        run: |
+          docker build -t database-agent:test .
+          docker run --rm database-agent:test python -m pytest
+
+  build-github-agent:
+    needs: github-agent-checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and test github-agent image
+        working-directory: github-agent
+        run: |
+          docker build -t github-agent:test .
+          docker run --rm github-agent:test python -m pytest 

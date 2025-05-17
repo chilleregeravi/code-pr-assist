@@ -15,7 +15,6 @@ fastapi==0.115.12
 filelock==3.18.0
 flake8==7.2.0
 fsspec==2025.3.2
--e git+https://github.com/chilleregeravi/code-pr-assist.git@558a91152781dea18a31009f5f34dfd1225a0433#egg=github_agent&subdirectory=github-agent
 grpcio==1.71.0
 h11==0.16.0
 h2==4.2.0
