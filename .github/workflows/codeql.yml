@@ -25,10 +25,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [ 'python', 'javascript' ]
+        language: [ 'python' ]
         # CodeQL supports [ 'c-cpp', 'csharp', 'go', 'java-kotlin', 'javascript-typescript', 'python', 'ruby', 'swift' ]
-        # Use only 'java-kotlin' to analyze code written in Java, Kotlin or both
-        # Use only 'javascript-typescript' to analyze code written in JavaScript, TypeScript or both
+        # This repository contains only Python source code
         # Learn more about CodeQL language support at https://aka.ms/codeql-docs/language-support
 
     steps:
@@ -82,7 +81,7 @@ jobs:
   bandit-scan:
     name: Python Security Scan (Bandit)
     runs-on: ubuntu-latest
-    if: ${{ contains(github.event.repository.languages, 'Python') || true }}
+    # Always run since this repository contains only Python code
 
     steps:
     - name: Checkout code
