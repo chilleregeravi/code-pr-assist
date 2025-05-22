@@ -78,7 +78,7 @@ jobs:
       with:
         category: "/language:${{matrix.language}}"
 
-  # Additional security scanning with Bandit for Python
+    # Additional security scanning with Bandit for Python
   bandit-scan:
     name: Python Security Scan (Bandit)
     runs-on: ubuntu-latest
@@ -102,37 +102,6 @@ jobs:
         bandit -r github-agent/src database-agent/src \
           -f json -o bandit-report.json \
           -ll -i || true  # Don't fail on issues, just report them
-
-    - name: Run Bandit security scan (SARIF)
-      run: |
-        bandit -r github-agent/src database-agent/src \
-          -f sarif -o bandit-results.sarif \
-          -ll -i || true
-        # Ensure SARIF file exists, create empty one if not
-        if [ ! -f bandit-results.sarif ]; then
-          cat > bandit-results.sarif << 'EOF'
-        {
-          "version": "2.1.0",
-          "runs": [
-            {
-              "tool": {
-                "driver": {
-                  "name": "bandit",
-                  "version": "1.0.0"
-                }
-              },
-              "results": []
-            }
-          ]
-        }
-        EOF
-        fi
-
-    - name: Upload Bandit results to GitHub Security
-      uses: github/codeql-action/upload-sarif@v3
-      if: always() && hashFiles('bandit-results.sarif') != ''
-      with:
-        sarif_file: bandit-results.sarif
 
     - name: Upload Bandit results as artifact
       uses: actions/upload-artifact@v4
@@ -253,6 +222,8 @@ jobs:
         echo "| Semgrep | ${{ needs.semgrep-scan.result }} |" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "📋 **Next Steps:**" >> $GITHUB_STEP_SUMMARY
-        echo "- Review any security alerts in the **Security** tab" >> $GITHUB_STEP_SUMMARY
-        echo "- Check **Actions** artifacts for detailed reports" >> $GITHUB_STEP_SUMMARY
+        echo "- Review security alerts in the **Security** tab (Semgrep + CodeQL)" >> $GITHUB_STEP_SUMMARY
+        echo "- Check **Actions** artifacts for detailed Bandit reports" >> $GITHUB_STEP_SUMMARY
         echo "- Address any high or critical severity issues" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Note:** Bandit reports are available as artifacts (JSON format only)" >> $GITHUB_STEP_SUMMARY

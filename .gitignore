@@ -177,7 +177,6 @@ cython_debug/
 security-reports/
 bandit-*.json
 bandit-*.txt
-bandit-*.sarif
 safety-*.json
 safety-*.txt
 semgrep-*.json

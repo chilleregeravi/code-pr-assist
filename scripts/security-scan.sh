@@ -63,30 +63,8 @@ bandit -r github-agent/src database-agent/src \
     -f txt -o security-reports/bandit-report.txt \
     -ll -i 2>/dev/null || true
 
-# Generate SARIF format for GitHub integration
-bandit -r github-agent/src database-agent/src \
-    -f sarif -o security-reports/bandit-results.sarif \
-    -ll -i 2>/dev/null || true
-
-# Ensure SARIF file exists, create empty one if not
-if [ ! -f "security-reports/bandit-results.sarif" ]; then
-    cat > security-reports/bandit-results.sarif << 'EOF'
-{
-  "version": "2.1.0",
-  "runs": [
-    {
-      "tool": {
-        "driver": {
-          "name": "bandit",
-          "version": "1.0.0"
-        }
-      },
-      "results": []
-    }
-  ]
-}
-EOF
-fi
+# Note: Bandit doesn't support SARIF format natively
+# Only JSON format is used for Bandit (SARIF support would require conversion)
 
 print_success "Bandit scan completed"
 
@@ -204,13 +182,14 @@ cat > security-reports/security-summary.md << EOF
 - ✅ Custom pattern matching
 
 ## Reports Generated
-- \`bandit-report.json\` - Detailed Bandit findings
+- \`bandit-report.json\` - Detailed Bandit findings (JSON format)
 - \`bandit-report.txt\` - Human-readable Bandit report
-- \`bandit-results.sarif\` - Bandit SARIF format for GitHub
 - \`safety-github-agent.json\` - GitHub Agent dependency vulnerabilities
 - \`safety-database-agent.json\` - Database Agent dependency vulnerabilities
 - \`semgrep-report.json\` - Semgrep security findings
-- \`semgrep-results.sarif\` - Semgrep SARIF format for GitHub
+- \`semgrep-results.sarif\` - Semgrep SARIF format for GitHub Security tab
+
+**Note:** Bandit doesn't support SARIF format natively. Only Semgrep uploads to GitHub Security tab.
 
 ## Next Steps
 1. Review all reports in the \`security-reports/\` directory
@@ -267,17 +246,18 @@ if [ -f "security-reports/semgrep-report.json" ]; then
     fi
 fi
 
-# Validate SARIF files were created properly
-if [ -f "security-reports/bandit-results.sarif" ]; then
-    print_success "Bandit SARIF report generated successfully"
-else
-    print_warning "Bandit SARIF report was not generated"
-fi
-
+# Validate SARIF files were created properly (Semgrep only)
 if [ -f "security-reports/semgrep-results.sarif" ]; then
     print_success "Semgrep SARIF report generated successfully"
 else
     print_warning "Semgrep SARIF report was not generated"
+fi
+
+# Note: Bandit only generates JSON format (no SARIF support)
+if [ -f "security-reports/bandit-report.json" ]; then
+    print_success "Bandit JSON report generated successfully"
+else
+    print_warning "Bandit JSON report was not generated"
 fi
 
 if [ $critical_issues -eq 0 ]; then
