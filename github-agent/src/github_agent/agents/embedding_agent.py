@@ -1,16 +1,16 @@
 import logging
 import numpy as np
-import openai
+from openai import OpenAI
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, PointStruct, VectorParams
 from github_agent.config import COLLECTION_NAME, QDRANT_URL, OPENAI_API_KEY
 
-openai.api_key = OPENAI_API_KEY
 logger = logging.getLogger(__name__)
 
 class EmbeddingAgent:
     def __init__(self):
         self.qdrant = QdrantClient(url=QDRANT_URL)
+        self.openai = OpenAI(api_key=OPENAI_API_KEY)
         self._ensure_collection_exists()
     
     def _ensure_collection_exists(self):
@@ -25,11 +25,11 @@ class EmbeddingAgent:
     def embed(self, text: str) -> np.ndarray:
         """Create embeddings using OpenAI's text-embedding-ada-002 model."""
         try:
-            response = openai.Embedding.create(
+            response = self.openai.embeddings.create(
                 model="text-embedding-ada-002",
                 input=text
             )
-            return np.array(response['data'][0]['embedding'])
+            return np.array(response.data[0].embedding)
         except Exception as e:
             logger.error(f"OpenAI embedding failed: {e}")
             raise

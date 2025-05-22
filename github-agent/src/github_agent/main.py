@@ -18,15 +18,43 @@ llm_agent = LLMAgent()
 embedding_agent = EmbeddingAgent()
 github_agent = GitHubAgent()
 
+@app.get("/")
+async def root():
+    """Root endpoint."""
+    return {"message": "GitHub PR Agent - OpenAI-powered PR analysis"}
+
+@app.get("/health")
+async def health():
+    """Health check endpoint."""
+    return {"status": "healthy"}
+
 
 @app.post("/webhook")
 async def handle_pr_webhook(request: Request):
     """Handle GitHub PR webhook events."""
+    # Check for required header
+    event_type = request.headers.get("X-GitHub-Event")
+    if not event_type:
+        return JSONResponse(
+            content={"detail": "Missing X-GitHub-Event header"},
+            status_code=400
+        )
+    
+    # Validate event type
+    if event_type != "pull_request":
+        return JSONResponse(
+            content={"detail": f"Unsupported event type: {event_type}"},
+            status_code=400
+        )
+
     try:
         data = await request.json()
-        if "pull_request" not in data:
-            logger.info("Webhook received without pull_request data.")
-            return JSONResponse(content={"status": "ignored"}, status_code=200)
+        if "pull_request" not in data or "action" not in data:
+            logger.info("Webhook received without required data.")
+            return JSONResponse(
+                content={"detail": "Missing required fields"},
+                status_code=422
+            )
 
         pr_info = data["pull_request"]
         required_fields = ["title", "body", "number", "diff_url"]
@@ -65,8 +93,10 @@ async def handle_pr_webhook(request: Request):
         )
     except Exception as e:
         logger.error(f"Webhook processing failed: {e}")
+        logger.exception("Webhook processing failed")
         return JSONResponse(
-            content={"status": "error", "message": str(e)}, status_code=500
+            content={"status": "error", "detail": str(e)}, 
+            status_code=500
         )
 
 

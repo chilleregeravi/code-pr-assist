@@ -21,9 +21,43 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = [
-    "pytest",
-    "pytest-cov",
+test = [
+    "pytest>=7.0",
+    "pytest-cov>=4.1",
+    "pytest-asyncio>=0.23",
+    "pytest-mock>=3.12",
+    "httpx>=0.26",  # For FastAPI TestClient
+    "black>=24.1",  # Code formatting
+    "isort>=5.13",  # Import sorting
+    "flake8>=7.0",  # Linting
+    "mypy>=1.8",    # Type checking
+]
+
+[tool.pytest.ini_options]
+addopts = "-v --cov=src/github_agent --cov-report=term-missing --cov-report=xml:coverage.xml"
+testpaths = ["src/tests"]
+pythonpath = ["src"]
+asyncio_mode = "auto"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::UserWarning",
+]
+
+[tool.coverage.run]
+source = ["src/github_agent"]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "pass",
+    "raise ImportError",
+]
+fail_under = 80
     "pytest-mock",
     "pytest-asyncio",
     "pylint",
