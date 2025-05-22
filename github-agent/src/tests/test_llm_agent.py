@@ -1,6 +1,7 @@
+from typing import Generator
+from unittest.mock import Mock, patch
+
 import pytest
-from typing import Any, Generator
-from unittest.mock import Mock, patch, MagicMock
 from github_agent.agents.llm_agent import LLMAgent
 
 

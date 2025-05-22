@@ -1,12 +1,12 @@
 import logging
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
+
 import numpy as np
-from openai import OpenAI
-from openai import OpenAIError, APIError, RateLimitError, APITimeoutError
+from github_agent.config import COLLECTION_NAME, OPENAI_API_KEY, QDRANT_URL
+from openai import APIError, APITimeoutError, OpenAI, OpenAIError, RateLimitError
 from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, PointStruct, VectorParams
 from qdrant_client.http.exceptions import ResponseHandlingException
-from github_agent.config import COLLECTION_NAME, QDRANT_URL, OPENAI_API_KEY
+from qdrant_client.models import Distance, PointStruct, VectorParams
 
 logger = logging.getLogger(__name__)
 

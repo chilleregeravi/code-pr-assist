@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import patch
+
+import pytest
 from github_agent.agents.github_agent import GitHubAgent
 
 

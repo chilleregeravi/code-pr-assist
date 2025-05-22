@@ -1,9 +1,8 @@
-from unittest.mock import patch
+from typing import Generator
+from unittest.mock import Mock, patch
 
 import pytest
 from github_agent.llm_utils import gpt_summarize_with_context
-from typing import Any, Generator
-from unittest.mock import Mock, MagicMock
 
 
 @pytest.fixture

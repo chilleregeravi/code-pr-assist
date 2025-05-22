@@ -1,8 +1,6 @@
 import logging
 from typing import List, Optional
 
-from openai import OpenAI
-from openai import OpenAIError, APIError, RateLimitError, APITimeoutError
 import requests
 from github_agent.config import (
     LLM_PROVIDER,
@@ -11,6 +9,7 @@ from github_agent.config import (
     OPENAI_API_KEY,
     OPENAI_MODEL,
 )
+from openai import APIError, APITimeoutError, OpenAI, OpenAIError, RateLimitError
 
 logger = logging.getLogger(__name__)
 

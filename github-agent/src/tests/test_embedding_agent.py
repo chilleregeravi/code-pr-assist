@@ -1,9 +1,9 @@
-import pytest
+from typing import Generator
+from unittest.mock import MagicMock, Mock, patch
+
 import numpy as np
-from typing import Any, Generator
-from unittest.mock import Mock, patch, MagicMock
+import pytest
 from github_agent.agents.embedding_agent import EmbeddingAgent
-from qdrant_client.models import ScoredPoint
 
 
 @pytest.fixture(autouse=True)
@@ -40,7 +40,7 @@ def test_embedding_agent_init(mock_qdrant: Mock) -> None:
 def test_ensure_collection_exists(mock_qdrant: Mock) -> None:
     """Test collection creation if it doesn't exist."""
     mock_qdrant.collection_exists.return_value = False
-    agent = EmbeddingAgent()
+    EmbeddingAgent()  # Initialize agent to trigger collection creation
     mock_qdrant.recreate_collection.assert_called_once()
 
 

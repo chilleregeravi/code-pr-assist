@@ -1,13 +1,13 @@
 # main.py
 import logging
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
 import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from github_agent.agents.llm_agent import LLMAgent
 from github_agent.agents.embedding_agent import EmbeddingAgent
 from github_agent.agents.github_agent import GitHubAgent
+from github_agent.agents.llm_agent import LLMAgent
 from github_agent.models import PullRequestData
 
 logging.basicConfig(level=logging.INFO)

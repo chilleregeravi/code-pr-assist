@@ -1,8 +1,8 @@
 """Tests for the FastAPI application."""
 
-import json
+from unittest.mock import Mock, patch
+
 import numpy as np
-from unittest.mock import Mock, patch, MagicMock
 import pytest
 from fastapi.testclient import TestClient
 
