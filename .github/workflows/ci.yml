@@ -12,12 +12,6 @@ on:
       - 'database-agent/**'
       - 'github-agent/**'
 
-env:
-  OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-  QDRANT_URL: 'http://localhost:6333'
-  COLLECTION_NAME: 'test_collection'
-  PYTHONPATH: ${{ github.workspace }}
-
 jobs:
   setup-database-agent:
     runs-on: ubuntu-latest

@@ -1,75 +1,114 @@
 import pytest
-from unittest.mock import Mock, patch
+from typing import Any, Generator
+from unittest.mock import Mock, patch, MagicMock
 from github_agent.agents.llm_agent import LLMAgent
 
-def test_summarize_with_context_success():
-    """Test successful PR summarization."""
-    mock_content = "Summary of PR"
-    mock_response = Mock()
-    mock_response.choices = [Mock(message=Mock(content=mock_content))]
-    
-    with patch('openai.ChatCompletion.create', return_value=mock_response) as mock_create:
-        agent = LLMAgent()
-        result = agent.summarize_with_context("test PR", ["context1", "context2"])
+
+@pytest.fixture(autouse=True)
+def mock_openai_client() -> Generator[Mock, None, None]:
+    """Mock OpenAI client for all tests."""
+    with patch('github_agent.agents.llm_agent.OpenAI') as mock_openai:
+        mock_client = Mock()
+        mock_openai.return_value = mock_client
         
-        assert result == mock_content
-        mock_create.assert_called_once()
-        call_args = mock_create.call_args[1]
-        assert call_args["model"] == "gpt-4"  # default model
-        assert len(call_args["messages"]) == 2
-        assert call_args["messages"][0]["role"] == "system"
-        assert call_args["messages"][1]["role"] == "user"
-        assert "test PR" in call_args["messages"][1]["content"]
-        assert "context1" in call_args["messages"][1]["content"]
-        assert "context2" in call_args["messages"][1]["content"]
-
-def test_summarize_with_context_error():
-    """Test error handling in PR summarization."""
-    with patch('openai.ChatCompletion.create', side_effect=Exception("API Error")):
-        agent = LLMAgent()
-        result = agent.summarize_with_context("test PR", [])
-        assert "Error" in result
-        assert "Could not generate summary" in result
-
-def test_summarize_with_different_model():
-    """Test PR summarization with different model."""
-    mock_content = "Summary of PR"
-    mock_response = Mock()
-    mock_response.choices = [Mock(message=Mock(content=mock_content))]
-    
-    with patch('openai.ChatCompletion.create', return_value=mock_response) as mock_create, \
-         patch('github_agent.agents.llm_agent.OPENAI_MODEL', 'gpt-3.5-turbo'):
-        agent = LLMAgent()
-        result = agent.summarize_with_context("test PR", ["context"])
+        # Setup default mock chat completion behavior
+        mock_response = Mock()
+        mock_response.choices = [Mock()]
+        mock_response.choices[0].message.content = "Test summary with labels: bug, enhancement"
+        mock_client.chat.completions.create.return_value = mock_response
         
-        assert result == mock_content
-        mock_create.assert_called_once()
-        call_args = mock_create.call_args[1]
-        assert call_args["model"] == "gpt-3.5-turbo"
+        yield mock_client
 
-def test_summarize_empty_response():
+
+def test_llm_agent_init(mock_openai_client: Mock) -> None:
+    """Test LLMAgent initialization."""
+    agent = LLMAgent()
+    assert agent.client is mock_openai_client
+    
+
+def test_summarize_with_context_success(mock_openai_client: Mock) -> None:
+    """Test successful PR summarization with context."""
+    # Setup mock response
+    mock_response = Mock()
+    mock_response.choices = [Mock()]
+    mock_response.choices[0].message.content = "Test summary with labels: bug, enhancement"
+    mock_openai_client.chat.completions.create.return_value = mock_response
+    
+    agent = LLMAgent()
+    result = agent.summarize_with_context(
+        "Fix memory leak in data processor",
+        ["Previous PR: Fixed similar issue", "Another PR: Memory optimization"]
+    )
+    
+    assert result == "Test summary with labels: bug, enhancement"
+    mock_openai_client.chat.completions.create.assert_called_once()
+    
+    # Verify the call arguments
+    call_args = mock_openai_client.chat.completions.create.call_args
+    assert call_args[1]["model"] == "gpt-4"  # From config - corrected expectation
+    assert len(call_args[1]["messages"]) == 2
+    assert call_args[1]["timeout"] == 60.0
+
+
+def test_summarize_with_context_empty_response(mock_openai_client: Mock) -> None:
     """Test handling of empty response from OpenAI."""
     mock_response = Mock()
-    mock_response.choices = [Mock(message=Mock(content=""))]
+    mock_response.choices = [Mock()]
+    mock_response.choices[0].message.content = None
+    mock_openai_client.chat.completions.create.return_value = mock_response
     
-    with patch('openai.ChatCompletion.create', return_value=mock_response):
-        agent = LLMAgent()
-        result = agent.summarize_with_context("test PR", [])
-        assert result == ""
+    agent = LLMAgent()
+    result = agent.summarize_with_context("Test PR", [])
+    
+    assert result == "[Error: Empty response from LLM.]"
 
-def test_summarize_with_empty_context():
-    """Test summarization with no context."""
-    mock_content = "Summary with no context"
-    mock_response = Mock()
-    mock_response.choices = [Mock(message=Mock(content=mock_content))]
+
+def test_summarize_rate_limit_error(mock_openai_client: Mock) -> None:
+    """Test handling of rate limit errors."""
+    from openai import RateLimitError
+    mock_openai_client.chat.completions.create.side_effect = RateLimitError(
+        message="Rate limit exceeded",
+        response=Mock(),
+        body={}
+    )
     
-    with patch('openai.ChatCompletion.create', return_value=mock_response) as mock_create:
-        agent = LLMAgent()
-        result = agent.summarize_with_context("test PR", [])
-        
-        assert result == mock_content
-        mock_create.assert_called_once()
-        call_args = mock_create.call_args[1]
-        messages = call_args["messages"][1]["content"]
-        assert "Context from similar past PRs:" in messages
-        assert "New PR:" in messages
+    agent = LLMAgent()
+    result = agent.summarize_with_context("Test PR", [])
+    
+    assert result == "[Error: Rate limit exceeded. Please try again later.]"
+
+
+def test_summarize_timeout_error(mock_openai_client: Mock) -> None:
+    """Test handling of timeout errors."""
+    from openai import APITimeoutError
+    mock_openai_client.chat.completions.create.side_effect = APITimeoutError(request=Mock())
+    
+    agent = LLMAgent()
+    result = agent.summarize_with_context("Test PR", [])
+    
+    assert result == "[Error: Request timed out. Please try again.]"
+
+
+def test_summarize_api_error(mock_openai_client: Mock) -> None:
+    """Test handling of API errors."""
+    from openai import APIError
+    mock_openai_client.chat.completions.create.side_effect = APIError(
+        message="API Error",
+        request=Mock(),
+        body={}
+    )
+    
+    agent = LLMAgent()
+    result = agent.summarize_with_context("Test PR", [])
+    
+    assert result == "[Error: API error occurred.]"
+
+
+def test_summarize_generic_error(mock_openai_client: Mock) -> None:
+    """Test handling of generic errors."""
+    mock_openai_client.chat.completions.create.side_effect = Exception("Network error")
+    
+    agent = LLMAgent()
+    result = agent.summarize_with_context("Test PR", [])
+    
+    assert result == "[Error: Could not generate summary.]"

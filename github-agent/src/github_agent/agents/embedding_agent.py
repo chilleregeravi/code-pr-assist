@@ -1,40 +1,70 @@
 import logging
+from typing import List, Dict, Any, Optional
 import numpy as np
 from openai import OpenAI
+from openai import OpenAIError, APIError, RateLimitError, APITimeoutError
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, PointStruct, VectorParams
+from qdrant_client.http.exceptions import ResponseHandlingException
 from github_agent.config import COLLECTION_NAME, QDRANT_URL, OPENAI_API_KEY
 
 logger = logging.getLogger(__name__)
 
 class EmbeddingAgent:
-    def __init__(self):
+    def __init__(self) -> None:
+        """Initialize the embedding agent with OpenAI and Qdrant clients."""
         self.qdrant = QdrantClient(url=QDRANT_URL)
-        self.openai = OpenAI(api_key=OPENAI_API_KEY)
+        self.openai = OpenAI(
+            api_key=OPENAI_API_KEY,
+            timeout=60.0,  # 60 second timeout
+        )
         self._ensure_collection_exists()
     
-    def _ensure_collection_exists(self):
+    def _ensure_collection_exists(self) -> None:
         """Ensure Qdrant collection exists with correct settings."""
-        if not self.qdrant.collection_exists(collection_name=COLLECTION_NAME):
-            # OpenAI text-embedding-ada-002 produces 1536-dimensional vectors
-            self.qdrant.recreate_collection(
-                collection_name=COLLECTION_NAME,
-                vectors_config=VectorParams(size=1536, distance=Distance.COSINE),
-            )
+        try:
+            if not self.qdrant.collection_exists(collection_name=COLLECTION_NAME):
+                # OpenAI text-embedding-ada-002 produces 1536-dimensional vectors
+                self.qdrant.recreate_collection(
+                    collection_name=COLLECTION_NAME,
+                    vectors_config=VectorParams(size=1536, distance=Distance.COSINE),
+                )
+                logger.info(f"Created Qdrant collection: {COLLECTION_NAME}")
+        except Exception as e:
+            logger.error(f"Failed to ensure Qdrant collection exists: {e}")
+            raise
 
     def embed(self, text: str) -> np.ndarray:
         """Create embeddings using OpenAI's text-embedding-ada-002 model."""
         try:
             response = self.openai.embeddings.create(
                 model="text-embedding-ada-002",
-                input=text
+                input=text,
+                timeout=60.0,  # Request-specific timeout
             )
             return np.array(response.data[0].embedding)
+        
+        except RateLimitError as e:
+            logger.error(f"OpenAI embedding rate limit exceeded: {e}")
+            raise
+        
+        except APITimeoutError as e:
+            logger.error(f"OpenAI embedding timeout: {e}")
+            raise
+        
+        except APIError as e:
+            logger.error(f"OpenAI embedding API error: {e}")
+            raise
+        
+        except OpenAIError as e:
+            logger.error(f"OpenAI embedding SDK error: {e}")
+            raise
+        
         except Exception as e:
-            logger.error(f"OpenAI embedding failed: {e}")
+            logger.error(f"Unexpected error in OpenAI embedding: {e}")
             raise
 
-    def search_similar(self, embedding: np.ndarray, k: int = 3):
+    def search_similar(self, embedding: np.ndarray, k: int = 3) -> List[Optional[Dict[str, Any]]]:
         """Search for similar PRs in Qdrant using the embedding."""
         try:
             search_result = self.qdrant.search(
@@ -43,11 +73,16 @@ class EmbeddingAgent:
                 limit=k
             )
             return [hit.payload for hit in search_result]
+        
+        except ResponseHandlingException as e:
+            logger.error(f"Qdrant search response error: {e}")
+            return []
+        
         except Exception as e:
             logger.error(f"Qdrant search failed: {e}")
             return []
 
-    def upsert(self, pr_number: int, embedding: np.ndarray, full_text: str):
+    def upsert(self, pr_number: int, embedding: np.ndarray, full_text: str) -> None:
         """Store PR data and its embedding in Qdrant."""
         try:
             self.qdrant.upsert(
@@ -60,6 +95,12 @@ class EmbeddingAgent:
                     )
                 ],
             )
+            logger.debug(f"Successfully upserted PR #{pr_number} to Qdrant")
+        
+        except ResponseHandlingException as e:
+            logger.error(f"Qdrant upsert response error for PR #{pr_number}: {e}")
+            raise
+        
         except Exception as e:
-            logger.error(f"Failed to upsert PR to Qdrant: {e}")
+            logger.error(f"Failed to upsert PR #{pr_number} to Qdrant: {e}")
             raise

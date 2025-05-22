@@ -1,5 +1,6 @@
 # main.py
 import logging
+from typing import Dict, Any, Optional
 
 import uvicorn
 from fastapi import FastAPI, Request
@@ -19,21 +20,21 @@ embedding_agent = EmbeddingAgent()
 github_agent = GitHubAgent()
 
 @app.get("/")
-async def root():
+async def root() -> Dict[str, str]:
     """Root endpoint."""
     return {"message": "GitHub PR Agent - OpenAI-powered PR analysis"}
 
 @app.get("/health")
-async def health():
+async def health() -> Dict[str, str]:
     """Health check endpoint."""
     return {"status": "healthy"}
 
 
 @app.post("/webhook")
-async def handle_pr_webhook(request: Request):
+async def handle_pr_webhook(request: Request) -> JSONResponse:
     """Handle GitHub PR webhook events."""
     # Check for required header
-    event_type = request.headers.get("X-GitHub-Event")
+    event_type: Optional[str] = request.headers.get("X-GitHub-Event")
     if not event_type:
         return JSONResponse(
             content={"detail": "Missing X-GitHub-Event header"},
@@ -48,7 +49,7 @@ async def handle_pr_webhook(request: Request):
         )
 
     try:
-        data = await request.json()
+        data: Dict[str, Any] = await request.json()
         if "pull_request" not in data or "action" not in data:
             logger.info("Webhook received without required data.")
             return JSONResponse(
@@ -56,7 +57,7 @@ async def handle_pr_webhook(request: Request):
                 status_code=422
             )
 
-        pr_info = data["pull_request"]
+        pr_info: Dict[str, Any] = data["pull_request"]
         required_fields = ["title", "body", "number", "diff_url"]
         if not all(field in pr_info for field in required_fields):
             logger.error("Missing required PR fields in webhook payload.")
@@ -75,7 +76,10 @@ async def handle_pr_webhook(request: Request):
         full_text = f"Title: {pr.title}\n\n{pr.body}"
         embedding = embedding_agent.embed(full_text)
         similar = embedding_agent.search_similar(embedding)
-        similar_bodies = [x["text"] for x in similar if "text" in x]
+        similar_bodies = [
+            x["text"] for x in similar 
+            if x is not None and isinstance(x, dict) and "text" in x
+        ]
         summary = llm_agent.summarize_with_context(full_text, similar_bodies)
 
         comment_posted = False

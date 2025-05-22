@@ -1,0 +1,56 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "GitHub Agent",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/github-agent/src/github_agent/main.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}/github-agent",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/github-agent/src"
+            },
+            "envFile": "${workspaceFolder}/github-agent/.env",
+            "python": "/usr/local/bin/python3",
+            "justMyCode": true
+        },
+        {
+            "name": "Database Agent",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/database-agent/src/database_agent/main.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}/database-agent",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/database-agent/src"
+            },
+            "envFile": "${workspaceFolder}/database-agent/.env",
+            "python": "/usr/local/bin/python3",
+            "justMyCode": true
+        },
+        {
+            "name": "Python: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "python": "/usr/local/bin/python3",
+            "justMyCode": true
+        },
+        {
+            "name": "Python: Pytest",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+                "${workspaceFolder}",
+                "-v"
+            ],
+            "console": "integratedTerminal",
+            "python": "/usr/local/bin/python3",
+            "justMyCode": false,
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}

@@ -3,20 +3,90 @@
     "build": {
         "dockerfile": "Dockerfile"
     },
-    "settings": {
-        "python.defaultInterpreterPath": "/usr/local/bin/python3",
-        "terminal.integrated.defaultProfile.linux": "bash"
-    },
-    "postCreateCommand": "pip install -r database-agent/requirements.txt -r github-agent/requirements.txt && pip install pytest mypy",
     "customizations": {
         "vscode": {
+            "settings": {
+                "python.defaultInterpreterPath": "/usr/local/bin/python3",
+                "python.terminal.activateEnvironment": false,
+                "black-formatter.args": ["--line-length=88"],
+                "isort.args": ["--profile", "black", "--line-length", "88"],
+                "flake8.args": ["--config=${workspaceFolder}/.flake8"],
+                "mypy-type-checker.args": ["--config-file=${workspaceFolder}/mypy.ini"],
+                "python.testing.pytestEnabled": true,
+                "python.testing.unittestEnabled": false,
+                "python.testing.pytestArgs": ["-v", "--tb=short"],
+                "python.testing.autoTestDiscoverOnSaveEnabled": true,
+                "terminal.integrated.defaultProfile.linux": "bash",
+                "terminal.integrated.env.linux": {
+                    "PYTHONPATH": "/workspaces/code-pr-assist"
+                },
+                "files.exclude": {
+                    "**/__pycache__": true,
+                    "**/*.pyc": true,
+                    ".pytest_cache": true,
+                    ".coverage": true,
+                    "coverage.xml": true,
+                    "**/.venv": true,
+                    "**/venv": true
+                },
+                "files.watcherExclude": {
+                    "**/__pycache__/**": true,
+                    "**/.pytest_cache/**": true,
+                    "**/.venv/**": true
+                },
+                "python.analysis.typeCheckingMode": "basic",
+                "python.analysis.autoImportCompletions": true,
+                "python.analysis.autoFormatStrings": true
+            },
             "extensions": [
                 "ms-python.python",
-                "ms-python.vscode-pylance",
-                "ms-toolsai.jupyter"
+                "ms-python.pylance",
+                "ms-python.black-formatter",
+                "ms-python.isort",
+                "ms-python.flake8",
+                "ms-python.mypy-type-checker",
+                "ms-toolsai.jupyter",
+                "ms-vscode.vscode-json",
+                "redhat.vscode-yaml",
+                "GitHub.copilot",
+                "GitHub.copilot-chat"
             ]
         }
     },
+    "postCreateCommand": "pip install -r database-agent/requirements.txt -r github-agent/requirements.txt && pip install pytest flake8 mypy black isort pre-commit && python -c \"import json; s=json.load(open('.vscode/settings.json')); t=json.load(open('.vscode/settings.template.json')); s.update(t); json.dump(s, open('.vscode/settings.json', 'w'), indent=4)\"",
+    "containerEnv": {
+        "PYTHONPATH": "/workspaces/code-pr-assist",
+        "PYTHONUNBUFFERED": "1",
+        "PYTHONDONTWRITEBYTECODE": "1"
+    },
+    "forwardPorts": [
+        8000,
+        8001,
+        6333
+    ],
+    "portsAttributes": {
+        "8000": {
+            "label": "GitHub Agent API",
+            "onAutoForward": "notify"
+        },
+        "8001": {
+            "label": "Database Agent API",
+            "onAutoForward": "notify"
+        },
+        "6333": {
+            "label": "Qdrant Vector Database",
+            "onAutoForward": "silent"
+        }
+    },
     "remoteUser": "vscode",
-    "workspaceFolder": "/workspaces/code-pr-assist"
+    "workspaceFolder": "/workspaces/code-pr-assist",
+    "features": {
+        "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+        "ghcr.io/devcontainers/features/git:1": {
+            "ppa": true
+        }
+    },
+    "mounts": [
+        "source=${localWorkspaceFolder}/.git,target=/workspaces/code-pr-assist/.git,type=bind,consistency=cached"
+    ]
 }

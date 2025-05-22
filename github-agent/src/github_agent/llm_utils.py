@@ -1,6 +1,8 @@
 import logging
+from typing import List, Optional
 
-import openai
+from openai import OpenAI
+from openai import OpenAIError, APIError, RateLimitError, APITimeoutError
 import requests
 from github_agent.config import (
     LLM_PROVIDER,
@@ -10,11 +12,23 @@ from github_agent.config import (
     OPENAI_MODEL,
 )
 
-openai.api_key = OPENAI_API_KEY
 logger = logging.getLogger(__name__)
 
+# Initialize OpenAI client globally
+_openai_client: Optional[OpenAI] = None
 
-def gpt_summarize_with_context(pr_text, similar_contexts):
+def _get_openai_client() -> OpenAI:
+    """Get or create OpenAI client instance."""
+    global _openai_client
+    if _openai_client is None:
+        _openai_client = OpenAI(
+            api_key=OPENAI_API_KEY,
+            timeout=60.0,
+        )
+    return _openai_client
+
+
+def gpt_summarize_with_context(pr_text: str, similar_contexts: List[str]) -> str:
     """Summarize PR and suggest labels using OpenAI GPT or Ollama with context."""
     # Truncate PR text if too long (max ~2000 tokens, roughly 8000 chars)
     if len(pr_text) > 7000:
@@ -31,20 +45,40 @@ New PR:
 """
     if LLM_PROVIDER == "openai":
         try:
-            response = openai.chat.completions.create(
+            client = _get_openai_client()
+            response = client.chat.completions.create(
                 model=OPENAI_MODEL,
                 messages=[
                     {"role": "system", "content": "You assist with GitHub PR reviews."},
                     {"role": "user", "content": prompt},
                 ],
+                timeout=60.0,
             )
-            content = response.choices[0].message.content.strip()
+            content = response.choices[0].message.content
             if not content:
                 return "[Error: Empty response from LLM.]"
-            return content
-        except Exception as e:
-            logger.error(f"OpenAI API call failed: {e}")
+            return content.strip()
+        
+        except RateLimitError as e:
+            logger.error(f"OpenAI rate limit exceeded: {e}")
+            return "[Error: Rate limit exceeded. Please try again later.]"
+        
+        except APITimeoutError as e:
+            logger.error(f"OpenAI API timeout: {e}")
+            return "[Error: Request timed out. Please try again.]"
+        
+        except APIError as e:
+            logger.error(f"OpenAI API error: {e}")
+            return "[Error: API error occurred.]"
+        
+        except OpenAIError as e:
+            logger.error(f"OpenAI SDK error: {e}")
             return "[Error: Could not generate summary.]"
+        
+        except Exception as e:
+            logger.error(f"Unexpected error in OpenAI call: {e}")
+            return "[Error: Could not generate summary.]"
+    
     elif LLM_PROVIDER == "ollama":
         try:
             payload = {
@@ -55,26 +89,38 @@ New PR:
                 ],
             }
             resp = requests.post(
-                f"{OLLAMA_URL}/v1/chat/completions", json=payload, timeout=60
+                f"{OLLAMA_URL}/v1/chat/completions", 
+                json=payload, 
+                timeout=60
             )
             resp.raise_for_status()
             data = resp.json()
             if "choices" in data and data["choices"]:
-                content = data["choices"][0]["message"]["content"].strip()
+                content = data["choices"][0]["message"]["content"]
                 if not content:
                     return "[Error: Empty response from LLM.]"
-                return content
+                return content.strip()
             elif "message" in data:
-                content = data["message"]["content"].strip()
+                content = data["message"]["content"]
                 if not content:
                     return "[Error: Empty response from LLM.]"
-                return content
+                return content.strip()
             else:
                 logger.error(f"Unexpected Ollama response: {data}")
                 return "[Error: Unexpected Ollama response.]"
-        except Exception as e:
-            logger.error(f"Ollama API call failed: {e}")
+        
+        except requests.exceptions.Timeout as e:
+            logger.error(f"Ollama request timeout: {e}")
+            return "[Error: Request timed out. Please try again.]"
+        
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Ollama request failed: {e}")
             return "[Error: Could not generate summary from Ollama.]"
+        
+        except Exception as e:
+            logger.error(f"Unexpected error in Ollama call: {e}")
+            return "[Error: Could not generate summary from Ollama.]"
+    
     else:
         logger.error(f"Unknown LLM_PROVIDER: {LLM_PROVIDER}")
         return "[Error: Unknown LLM provider configured.]"
