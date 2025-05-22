@@ -78,18 +78,38 @@ async def handle_pr_webhook(request: Request):
         similar_bodies = [x["text"] for x in similar if "text" in x]
         summary = llm_agent.summarize_with_context(full_text, similar_bodies)
 
+        comment_posted = False
+        embedding_stored = False
+        
+        # Try to post the comment
         try:
             github_agent.post_comment(pr.number, summary)
-        except Exception:
-            logger.warning(f"Could not post comment to PR #{pr.number}.")
+            comment_posted = True
+        except Exception as e:
+            logger.warning(f"Could not post comment to PR #{pr.number}: {e}")
 
+        # Try to store the embedding
         try:
             embedding_agent.upsert(pr.number, embedding, full_text)
+            embedding_stored = True
         except Exception as e:
             logger.error(f"Failed to upsert PR to Qdrant: {e}")
 
+        # Determine status based on operations
+        status = "processed" if comment_posted and embedding_stored else "partially_processed"
+            
+        # Convert the numpy array to a list to make it JSON serializable
+        embedding_list = embedding.tolist() if embedding is not None else None
+        
         return JSONResponse(
-            content={"status": "processed", "summary": summary}, status_code=200
+            content={
+                "status": status,
+                "summary": str(summary),
+                "comment_posted": bool(comment_posted),
+                "embedding_stored": bool(embedding_stored),
+                "embedding": embedding_list
+            },
+            status_code=200
         )
     except Exception as e:
         logger.error(f"Webhook processing failed: {e}")

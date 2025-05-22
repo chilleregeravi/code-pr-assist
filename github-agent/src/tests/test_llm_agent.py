@@ -30,3 +30,46 @@ def test_summarize_with_context_error():
         result = agent.summarize_with_context("test PR", [])
         assert "Error" in result
         assert "Could not generate summary" in result
+
+def test_summarize_with_different_model():
+    """Test PR summarization with different model."""
+    mock_content = "Summary of PR"
+    mock_response = Mock()
+    mock_response.choices = [Mock(message=Mock(content=mock_content))]
+    
+    with patch('openai.ChatCompletion.create', return_value=mock_response) as mock_create, \
+         patch('github_agent.agents.llm_agent.OPENAI_MODEL', 'gpt-3.5-turbo'):
+        agent = LLMAgent()
+        result = agent.summarize_with_context("test PR", ["context"])
+        
+        assert result == mock_content
+        mock_create.assert_called_once()
+        call_args = mock_create.call_args[1]
+        assert call_args["model"] == "gpt-3.5-turbo"
+
+def test_summarize_empty_response():
+    """Test handling of empty response from OpenAI."""
+    mock_response = Mock()
+    mock_response.choices = [Mock(message=Mock(content=""))]
+    
+    with patch('openai.ChatCompletion.create', return_value=mock_response):
+        agent = LLMAgent()
+        result = agent.summarize_with_context("test PR", [])
+        assert result == ""
+
+def test_summarize_with_empty_context():
+    """Test summarization with no context."""
+    mock_content = "Summary with no context"
+    mock_response = Mock()
+    mock_response.choices = [Mock(message=Mock(content=mock_content))]
+    
+    with patch('openai.ChatCompletion.create', return_value=mock_response) as mock_create:
+        agent = LLMAgent()
+        result = agent.summarize_with_context("test PR", [])
+        
+        assert result == mock_content
+        mock_create.assert_called_once()
+        call_args = mock_create.call_args[1]
+        messages = call_args["messages"][1]["content"]
+        assert "Context from similar past PRs:" in messages
+        assert "New PR:" in messages

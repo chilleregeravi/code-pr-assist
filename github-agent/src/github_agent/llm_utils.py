@@ -16,6 +16,10 @@ logger = logging.getLogger(__name__)
 
 def gpt_summarize_with_context(pr_text, similar_contexts):
     """Summarize PR and suggest labels using OpenAI GPT or Ollama with context."""
+    # Truncate PR text if too long (max ~2000 tokens, roughly 8000 chars)
+    if len(pr_text) > 7000:
+        pr_text = pr_text[:7000] + "... (truncated)"
+        
     context_text = "\n---\n".join(similar_contexts)
     prompt = f"""
 You are a GitHub bot. Summarize the PR below and suggest appropriate labels.
@@ -27,14 +31,17 @@ New PR:
 """
     if LLM_PROVIDER == "openai":
         try:
-            response = openai.ChatCompletion.create(
+            response = openai.chat.completions.create(
                 model=OPENAI_MODEL,
                 messages=[
                     {"role": "system", "content": "You assist with GitHub PR reviews."},
                     {"role": "user", "content": prompt},
                 ],
             )
-            return response.choices[0].message.content.strip()
+            content = response.choices[0].message.content.strip()
+            if not content:
+                return "[Error: Empty response from LLM.]"
+            return content
         except Exception as e:
             logger.error(f"OpenAI API call failed: {e}")
             return "[Error: Could not generate summary.]"
@@ -53,9 +60,15 @@ New PR:
             resp.raise_for_status()
             data = resp.json()
             if "choices" in data and data["choices"]:
-                return data["choices"][0]["message"]["content"].strip()
+                content = data["choices"][0]["message"]["content"].strip()
+                if not content:
+                    return "[Error: Empty response from LLM.]"
+                return content
             elif "message" in data:
-                return data["message"]["content"].strip()
+                content = data["message"]["content"].strip()
+                if not content:
+                    return "[Error: Empty response from LLM.]"
+                return content
             else:
                 logger.error(f"Unexpected Ollama response: {data}")
                 return "[Error: Unexpected Ollama response.]"

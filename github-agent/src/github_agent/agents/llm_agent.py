@@ -17,7 +17,7 @@ New PR:
 {pr_text}
 """
         try:
-            response = openai.ChatCompletion.create(
+            response = openai.chat.completions.create(
                 model=OPENAI_MODEL,
                 messages=[
                     {"role": "system", "content": "You assist with GitHub PR reviews."},

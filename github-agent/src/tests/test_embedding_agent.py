@@ -101,5 +101,18 @@ def test_upsert_error(mock_qdrant):
     """Test upsert error handling."""
     mock_qdrant.upsert.side_effect = Exception("Upsert failed")
     agent = EmbeddingAgent()
+    embedding = np.array([0.1] * 1536)
     with pytest.raises(Exception):
-        agent.upsert(123, np.array([0.1] * 1536), "Test PR")
+        agent.upsert(123, embedding, "Test PR")
+
+def test_init_qdrant_error():
+    """Test Qdrant client initialization error."""
+    with patch('github_agent.agents.embedding_agent.QdrantClient', side_effect=Exception("Connection failed")):
+        with pytest.raises(Exception):
+            EmbeddingAgent()
+
+def test_init_openai_error():
+    """Test OpenAI client initialization error."""
+    with patch('github_agent.agents.embedding_agent.OpenAI', side_effect=Exception("API key invalid")):
+        with pytest.raises(Exception):
+            EmbeddingAgent()

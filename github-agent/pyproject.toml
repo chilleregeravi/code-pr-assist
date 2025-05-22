@@ -58,12 +58,6 @@ exclude_lines = [
     "raise ImportError",
 ]
 fail_under = 80
-    "pytest-mock",
-    "pytest-asyncio",
-    "pylint",
-    "ruff",
-    "mypy",
-]
 
 [tool.setuptools]
 package-dir = {"" = "src"}
