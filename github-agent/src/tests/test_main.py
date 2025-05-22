@@ -1,12 +1,14 @@
 """Tests for the FastAPI application."""
 
+import logging
 from unittest.mock import Mock, patch
 
 import numpy as np
 import pytest
 from fastapi.testclient import TestClient
 
-print("Starting test file")
+logger = logging.getLogger(__name__)
+logger.info("Starting test file")
 
 # Mock OpenAI and Qdrant before importing app
 with patch("github_agent.agents.embedding_agent.OpenAI") as mock_openai_class, patch(

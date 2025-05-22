@@ -1,33 +1,38 @@
+import logging
 import os
+import time
+from typing import List, Dict, Any
+
+from dotenv import load_dotenv
 from github import Github
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
 from sentence_transformers import SentenceTransformer
-from dotenv import load_dotenv
-import time
-from typing import List, Dict, Any
 
 # Load environment variables
 load_dotenv()
 
+# Setup logging
+logger = logging.getLogger(__name__)
+
+
 class GitHubPRToQdrant:
     def __init__(self):
         # Initialize GitHub client
-        self.github_token = os.getenv('GITHUB_TOKEN')
+        self.github_token = os.getenv("GITHUB_TOKEN")
         if not self.github_token:
             raise ValueError("GitHub token not found in environment variables")
         self.github_client = Github(self.github_token)
 
         # Initialize Qdrant client
-        self.qdrant_url = os.getenv('QDRANT_URL')
-        self.qdrant_api_key = os.getenv('QDRANT_API_KEY')
+        self.qdrant_url = os.getenv("QDRANT_URL")
+        self.qdrant_api_key = os.getenv("QDRANT_API_KEY")
         self.qdrant_client = QdrantClient(
-            url=self.qdrant_url,
-            api_key=self.qdrant_api_key
+            url=self.qdrant_url, api_key=self.qdrant_api_key
         )
 
         # Initialize embedding model
-        self.model = SentenceTransformer('all-MiniLM-L6-v2')
+        self.model = SentenceTransformer("all-MiniLM-L6-v2")
 
         # Create collection if it doesn't exist
         self._ensure_collection_exists()
@@ -40,11 +45,10 @@ class GitHubPRToQdrant:
         if "github_prs" not in collection_names:
             collection_config = models.VectorParams(
                 size=384,  # Size for all-MiniLM-L6-v2 model
-                distance=models.Distance.COSINE
+                distance=models.Distance.COSINE,
             )
             self.qdrant_client.create_collection(
-                collection_name="github_prs",
-                vectors_config=collection_config
+                collection_name="github_prs", vectors_config=collection_config
             )
 
     def fetch_pr_data(self, repo_name: str, pr_number: int) -> Dict[str, Any]:
@@ -65,12 +69,12 @@ class GitHubPRToQdrant:
                 "updated_at": pr.updated_at.isoformat(),
                 "author": pr.user.login,
                 "labels": [label.name for label in pr.labels],
-                "comments": [comment.body for comment in pr.get_issue_comments()]
+                "comments": [comment.body for comment in pr.get_issue_comments()],
             }
 
             return pr_data
         except Exception as e:
-            print(f"Error fetching PR data: {str(e)}")
+            logger.error(f"Error fetching PR data: {str(e)}")
             raise
 
     def process_and_upload_pr(self, pr_data: Dict[str, Any]):
@@ -82,23 +86,20 @@ class GitHubPRToQdrant:
 
             # Prepare point for Qdrant
             point = models.PointStruct(
-                id=pr_data['id'],
-                vector=embedding.tolist(),
-                payload=pr_data
+                id=pr_data["id"], vector=embedding.tolist(), payload=pr_data
             )
 
             # Upload to Qdrant
-            self.qdrant_client.upsert(
-                collection_name="github_prs",
-                points=[point]
-            )
+            self.qdrant_client.upsert(collection_name="github_prs", points=[point])
 
-            print(f"Successfully uploaded PR #{pr_data['id']} to Qdrant")
+            logger.info(f"Successfully uploaded PR #{pr_data['id']} to Qdrant")
         except Exception as e:
-            print(f"Error processing and uploading PR: {str(e)}")
+            logger.error(f"Error processing and uploading PR: {str(e)}")
             raise
 
-    def search_similar_prs(self, query_text: str, limit: int = 5) -> List[Dict[str, Any]]:
+    def search_similar_prs(
+        self, query_text: str, limit: int = 5
+    ) -> List[Dict[str, Any]]:
         """Search for similar PRs in Qdrant."""
         try:
             # Generate embedding for query
@@ -108,20 +109,17 @@ class GitHubPRToQdrant:
             search_result = self.qdrant_client.search(
                 collection_name="github_prs",
                 query_vector=query_embedding.tolist(),
-                limit=limit
+                limit=limit,
             )
 
             return [
-                {
-                    "id": hit.id,
-                    "score": hit.score,
-                    "payload": hit.payload
-                }
+                {"id": hit.id, "score": hit.score, "payload": hit.payload}
                 for hit in search_result
             ]
         except Exception as e:
-            print(f"Error searching similar PRs: {str(e)}")
+            logger.error(f"Error searching similar PRs: {str(e)}")
             raise
+
 
 def main():
     # Example usage
@@ -143,13 +141,14 @@ def main():
         query = "Add new feature for user authentication"
         similar_prs = pr_integration.search_similar_prs(query)
 
-        print("\nSimilar PRs found:")
+        logger.info("\nSimilar PRs found:")
         for pr in similar_prs:
-            print(f"PR #{pr['id']} - Score: {pr['score']}")
-            print(f"Title: {pr['payload']['title']}\n")
+            logger.info(f"PR #{pr['id']} - Score: {pr['score']}")
+            logger.info(f"Title: {pr['payload']['title']}\n")
 
     except Exception as e:
-        print(f"Error in main execution: {str(e)}")
+        logger.error(f"Error in main execution: {str(e)}")
+
 
 if __name__ == "__main__":
     main()

@@ -1,5 +1,6 @@
 """GitHub API client for fetching PR data."""
 
+import logging
 import os
 import time
 from datetime import datetime
@@ -11,6 +12,8 @@ from github.PullRequest import PullRequest
 from github.Repository import Repository
 
 from .exceptions import PRProcessingError
+
+logger = logging.getLogger(__name__)
 
 
 def rate_limit(func):
@@ -245,7 +248,7 @@ class GitHubClient:
             try:
                 pr_processor.process_and_store_pr(pr_data)
             except Exception as e:
-                print(f"Failed to process PR #{pr_data['id']}: {str(e)}")
+                logger.error(f"Failed to process PR #{pr_data['id']}: {str(e)}")
                 continue
 
     def search_prs(

@@ -1,3 +1,4 @@
+import logging
 import os
 import sys
 from typing import Optional
@@ -5,6 +6,8 @@ from typing import Optional
 from dotenv import load_dotenv
 
 load_dotenv()
+
+logger = logging.getLogger(__name__)
 
 
 def get_required_env_var(name: str) -> str:
@@ -14,9 +17,7 @@ def get_required_env_var(name: str) -> str:
         # Don't exit during tests or when importing for inspection
         if "pytest" in sys.modules or os.getenv("TESTING"):
             return f"test-{name.lower().replace('_', '-')}"
-        print(
-            f"ERROR: Required environment variable '{name}' is not set", file=sys.stderr
-        )
+        logger.error(f"Required environment variable '{name}' is not set")
         sys.exit(1)
     return value
 
@@ -28,20 +29,16 @@ def get_env_var_with_validation(
     value = os.getenv(name, default)
     if not value:
         if default is None:
-            print(
-                f"ERROR: Required environment variable '{name}' is not set",
-                file=sys.stderr,
-            )
+            logger.error(f"Required environment variable '{name}' is not set")
             sys.exit(1)
         return default
 
     # Validate HTTPS for production URLs
     if validate_https and value.startswith("http://") and "localhost" not in value:
-        warning_msg = (
-            f"WARNING: Using insecure HTTP for {name}: {value}. "
+        logger.warning(
+            f"Using insecure HTTP for {name}: {value}. "
             "Consider using HTTPS in production."
         )
-        print(warning_msg, file=sys.stderr)
 
     return value
 
@@ -66,11 +63,9 @@ OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama2")
 # Validate LLM provider
 if LLM_PROVIDER not in ["openai", "ollama"]:
     if not ("pytest" in sys.modules or os.getenv("TESTING")):
-        error_msg = (
-            f"ERROR: Invalid LLM_PROVIDER '{LLM_PROVIDER}'. "
-            "Must be 'openai' or 'ollama'"
+        logger.error(
+            f"Invalid LLM_PROVIDER '{LLM_PROVIDER}'. " "Must be 'openai' or 'ollama'"
         )
-        print(error_msg, file=sys.stderr)
         sys.exit(1)
 
 # Security-related configuration

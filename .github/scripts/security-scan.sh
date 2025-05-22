@@ -75,10 +75,10 @@ print_status "Running Safety dependency scan..."
 cd github-agent
 if [ -f "requirements.txt" ]; then
     pip install -r requirements.txt --quiet
-    safety check --json --output ../security-reports/safety-github-agent.json 2>/dev/null || {
+    safety check --json > ../security-reports/safety-github-agent.json 2>/dev/null || {
         print_warning "Safety found vulnerabilities in GitHub Agent dependencies"
     }
-    safety check --output ../security-reports/safety-github-agent.txt 2>/dev/null || true
+    safety check > ../security-reports/safety-github-agent.txt 2>/dev/null || true
 fi
 cd ..
 
@@ -86,10 +86,10 @@ cd ..
 cd database-agent
 if [ -f "requirements.txt" ]; then
     pip install -r requirements.txt --quiet
-    safety check --json --output ../security-reports/safety-database-agent.json 2>/dev/null || {
+    safety check --json > ../security-reports/safety-database-agent.json 2>/dev/null || {
         print_warning "Safety found vulnerabilities in Database Agent dependencies"
     }
-    safety check --output ../security-reports/safety-database-agent.txt 2>/dev/null || true
+    safety check > ../security-reports/safety-database-agent.txt 2>/dev/null || true
 fi
 cd ..
 

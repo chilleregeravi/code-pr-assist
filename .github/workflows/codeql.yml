@@ -131,15 +131,15 @@ jobs:
       working-directory: github-agent
       run: |
         pip install -r requirements.txt
-        safety check --json --output safety-github-agent.json || true
-        safety check --output safety-github-agent.txt || true
+        safety check --json > safety-github-agent.json || true
+        safety check > safety-github-agent.txt || true
 
     - name: Run Safety scan on Database Agent
       working-directory: database-agent
       run: |
         pip install -r requirements.txt
-        safety check --json --output safety-database-agent.json || true
-        safety check --output safety-database-agent.txt || true
+        safety check --json > safety-database-agent.json || true
+        safety check > safety-database-agent.txt || true
 
     - name: Upload Safety results
       uses: actions/upload-artifact@v4
