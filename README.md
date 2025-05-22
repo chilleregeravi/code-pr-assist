@@ -129,10 +129,22 @@ All configuration is **warning-free** and uses the latest VS Code Python extensi
 
 ## Setup
 
-### Option 1: DevContainer (Recommended)
+### Option 1: One-Command Setup (Fastest)
+```bash
+git clone <repo-url>
+cd code-pr-assist
+./setup.sh
+```
+This automatically:
+- ✅ Sets up virtual environments for both agents
+- ✅ Installs all dependencies
+- ✅ Installs pre-commit hooks for automatic code quality checks
+- ✅ Provides next steps
+
+### Option 2: DevContainer (Recommended for Development)
 Follow the [Development Environment](#development-environment) section above for the easiest setup.
 
-### Option 2: Manual Setup
+### Option 3: Manual Setup
 
 1. **Clone the repository**
 
@@ -255,21 +267,34 @@ Pre-commit hooks are configured to automatically:
 - Format code with Black
 - Sort imports with isort
 - Run flake8 linting
-- Check type annotations with mypy
+- Run tests with full coverage
+- Check for merge conflicts and code quality
 
-Install hooks:
+**Automatic Installation** (Recommended):
 ```bash
+# One-command setup for everything
+./setup.sh
+
+# Or setup individual agents with pre-commit hooks
+cd github-agent && make setup
+cd database-agent && make setup
+```
+
+**Manual Installation**:
+```bash
+pip install pre-commit
 pre-commit install
 ```
 
 #### **Available Make Commands**
 ```bash
+make setup         # Setup environment + install pre-commit hooks
 make test          # Run tests with coverage
 make lint          # Run flake8 linting
 make format        # Format with Black and isort
 make type-check    # Run mypy type checking
 make clean         # Clean up cache files
-make install       # Install dependencies
+make venv          # Create virtual environment only
 make run           # Start the service
 ```
 

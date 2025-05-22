@@ -53,7 +53,7 @@
             ]
         }
     },
-    "postCreateCommand": "pip install -r database-agent/requirements.txt -r github-agent/requirements.txt && pip install pytest flake8 mypy black isort pre-commit && python -c \"import json; s=json.load(open('.vscode/settings.json')); t=json.load(open('.vscode/settings.template.json')); s.update(t); json.dump(s, open('.vscode/settings.json', 'w'), indent=4)\"",
+    "postCreateCommand": "pip install -r database-agent/requirements.txt -r github-agent/requirements.txt && pip install pytest flake8 mypy black isort pre-commit && pre-commit install && python -c \"import json; s=json.load(open('.vscode/settings.json')); t=json.load(open('.vscode/settings.template.json')); s.update(t); json.dump(s, open('.vscode/settings.json', 'w'), indent=4)\"",
     "containerEnv": {
         "PYTHONPATH": "/workspaces/code-pr-assist",
         "PYTHONUNBUFFERED": "1",
