@@ -77,6 +77,9 @@ jobs:
     needs: setup-database-agent
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: read  # Required for cache restore operations
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -115,6 +118,9 @@ jobs:
   github-agent-checks:
     needs: setup-github-agent
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read  # Required for checkout and basic operations
     defaults:
       run:
         working-directory: ./github-agent
@@ -154,6 +160,9 @@ jobs:
 
   test-github-agent:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read  # Required for checkout operations
     services:
       qdrant:
         image: qdrant/qdrant:latest
@@ -197,6 +206,8 @@ jobs:
     needs: database-agent-checks
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read  # Required for checkout operations
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -213,6 +224,8 @@ jobs:
     needs: github-agent-checks
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read  # Required for checkout operations
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
