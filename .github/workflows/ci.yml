@@ -14,9 +14,16 @@ on:
       - 'github-agent/**'
       - '.github/workflows/**'
 
+permissions:
+  contents: read
+  actions: read
+
 jobs:
   setup-database-agent:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write  # Required for cache save operations
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -41,6 +48,9 @@ jobs:
 
   setup-github-agent:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write  # Required for cache save operations
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
