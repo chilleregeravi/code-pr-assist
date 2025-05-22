@@ -18,7 +18,6 @@ dependencies = [
     "PyGithub",
     "openai",
     "qdrant-client",
-    "sentence-transformers",
 ]
 
 [project.optional-dependencies]
@@ -34,4 +33,4 @@ dev = [
 
 [tool.setuptools]
 package-dir = {"" = "src"}
-packages = ["github_agent"] 
+packages = ["github_agent"]

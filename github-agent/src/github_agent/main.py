@@ -4,15 +4,19 @@ import logging
 import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from github_agent.github_utils import post_comment_to_pr
-from github_agent.llm_utils import gpt_summarize_with_context
+from github_agent.agents.llm_agent import LLMAgent
+from github_agent.agents.embedding_agent import EmbeddingAgent
+from github_agent.agents.github_agent import GitHubAgent
 from github_agent.models import PullRequestData
-from github_agent.qdrant_utils import embed_text, search_similar_prs, upsert_pr
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
+
+llm_agent = LLMAgent()
+embedding_agent = EmbeddingAgent()
+github_agent = GitHubAgent()
 
 
 @app.post("/webhook")
@@ -41,18 +45,18 @@ async def handle_pr_webhook(request: Request):
         )
 
         full_text = f"Title: {pr.title}\n\n{pr.body}"
-        embedding = embed_text(full_text)
-        similar = search_similar_prs(embedding)
+        embedding = embedding_agent.embed(full_text)
+        similar = embedding_agent.search_similar(embedding)
         similar_bodies = [x["text"] for x in similar if "text" in x]
-        summary = gpt_summarize_with_context(full_text, similar_bodies)
+        summary = llm_agent.summarize_with_context(full_text, similar_bodies)
 
         try:
-            post_comment_to_pr(pr.number, summary)
+            github_agent.post_comment(pr.number, summary)
         except Exception:
             logger.warning(f"Could not post comment to PR #{pr.number}.")
 
         try:
-            upsert_pr(pr.number, embedding, full_text)
+            embedding_agent.upsert(pr.number, embedding, full_text)
         except Exception as e:
             logger.error(f"Failed to upsert PR to Qdrant: {e}")
 
