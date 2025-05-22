@@ -21,6 +21,10 @@ jobs:
     name: Analyze Code
     runs-on: ubuntu-latest
     timeout-minutes: 360
+    permissions:
+      contents: read
+      security-events: write  # Required for uploading CodeQL results
+      actions: read
 
     strategy:
       fail-fast: false
@@ -84,7 +88,7 @@ jobs:
     # Always run since this repository contains only Python code
     permissions:
       contents: read
-      actions: read
+      actions: write  # Required for uploading artifacts
 
     steps:
     - name: Checkout code
@@ -118,7 +122,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      actions: read
+      actions: write  # Required for uploading artifacts
 
     steps:
     - name: Checkout code
