@@ -6,11 +6,13 @@ on:
     paths:
       - 'database-agent/**'
       - 'github-agent/**'
+      - '.github/workflows/**'
   pull_request:
     branches: [ main ]
     paths:
       - 'database-agent/**'
       - 'github-agent/**'
+      - '.github/workflows/**'
 
 jobs:
   setup-database-agent:

@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 from github_agent.agents.embedding_agent import EmbeddingAgent
 from github_agent.agents.github_agent import GitHubAgent
 from github_agent.agents.llm_agent import LLMAgent
+from github_agent.config import SERVER_HOST, SERVER_PORT
 from github_agent.models import PullRequestData
 
 logging.basicConfig(level=logging.INFO)
@@ -128,4 +129,4 @@ async def handle_pr_webhook(request: Request) -> JSONResponse:
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host=SERVER_HOST, port=SERVER_PORT)
