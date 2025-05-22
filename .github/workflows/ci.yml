@@ -169,13 +169,7 @@ jobs:
         working-directory: github-agent
         run: |
           source .venv/bin/activate
-          pytest -v --cov=src --cov-report=xml --cov-fail-under=80
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
-        with:
-          file: ./github-agent/coverage.xml
-          fail_ci_if_error: true
+          pytest -v --cov=src --cov-report=term-missing --cov-fail-under=80
 
       - name: Type check
         working-directory: github-agent
