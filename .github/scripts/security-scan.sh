@@ -204,7 +204,7 @@ pip install --upgrade -r github-agent/requirements.txt
 pip install --upgrade -r database-agent/requirements.txt
 
 # Re-run security scan
-./scripts/security-scan.sh
+./.github/scripts/security-scan.sh
 \`\`\`
 EOF
 
