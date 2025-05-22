@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 # Initialize OpenAI client globally
 _openai_client: Optional[OpenAI] = None
 
+
 def _get_openai_client() -> OpenAI:
     """Get or create OpenAI client instance."""
     global _openai_client
@@ -33,7 +34,7 @@ def gpt_summarize_with_context(pr_text: str, similar_contexts: List[str]) -> str
     # Truncate PR text if too long (max ~2000 tokens, roughly 8000 chars)
     if len(pr_text) > 7000:
         pr_text = pr_text[:7000] + "... (truncated)"
-        
+
     context_text = "\n---\n".join(similar_contexts)
     prompt = f"""
 You are a GitHub bot. Summarize the PR below and suggest appropriate labels.
@@ -58,27 +59,27 @@ New PR:
             if not content:
                 return "[Error: Empty response from LLM.]"
             return content.strip()
-        
+
         except RateLimitError as e:
             logger.error(f"OpenAI rate limit exceeded: {e}")
             return "[Error: Rate limit exceeded. Please try again later.]"
-        
+
         except APITimeoutError as e:
             logger.error(f"OpenAI API timeout: {e}")
             return "[Error: Request timed out. Please try again.]"
-        
+
         except APIError as e:
             logger.error(f"OpenAI API error: {e}")
             return "[Error: API error occurred.]"
-        
+
         except OpenAIError as e:
             logger.error(f"OpenAI SDK error: {e}")
             return "[Error: Could not generate summary.]"
-        
+
         except Exception as e:
             logger.error(f"Unexpected error in OpenAI call: {e}")
             return "[Error: Could not generate summary.]"
-    
+
     elif LLM_PROVIDER == "ollama":
         try:
             payload = {
@@ -89,9 +90,7 @@ New PR:
                 ],
             }
             resp = requests.post(
-                f"{OLLAMA_URL}/v1/chat/completions", 
-                json=payload, 
-                timeout=60
+                f"{OLLAMA_URL}/v1/chat/completions", json=payload, timeout=60
             )
             resp.raise_for_status()
             data = resp.json()
@@ -108,19 +107,19 @@ New PR:
             else:
                 logger.error(f"Unexpected Ollama response: {data}")
                 return "[Error: Unexpected Ollama response.]"
-        
+
         except requests.exceptions.Timeout as e:
             logger.error(f"Ollama request timeout: {e}")
             return "[Error: Request timed out. Please try again.]"
-        
+
         except requests.exceptions.RequestException as e:
             logger.error(f"Ollama request failed: {e}")
             return "[Error: Could not generate summary from Ollama.]"
-        
+
         except Exception as e:
             logger.error(f"Unexpected error in Ollama call: {e}")
             return "[Error: Could not generate summary from Ollama.]"
-    
+
     else:
         logger.error(f"Unknown LLM_PROVIDER: {LLM_PROVIDER}")
         return "[Error: Unknown LLM provider configured.]"
