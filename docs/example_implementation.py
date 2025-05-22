@@ -52,10 +52,10 @@ class GitHubPRToQdrant:
         try:
             repo = self.github_client.get_repo(repo_name)
             pr = repo.get_pull(pr_number)
-            
+
             # Add delay to respect rate limits
             time.sleep(0.5)
-            
+
             pr_data = {
                 "id": pr.number,
                 "title": pr.title,
@@ -67,7 +67,7 @@ class GitHubPRToQdrant:
                 "labels": [label.name for label in pr.labels],
                 "comments": [comment.body for comment in pr.get_issue_comments()]
             }
-            
+
             return pr_data
         except Exception as e:
             print(f"Error fetching PR data: {str(e)}")
@@ -79,20 +79,20 @@ class GitHubPRToQdrant:
             # Generate embedding
             text_to_embed = f"{pr_data['title']} {pr_data['body']}"
             embedding = self.model.encode(text_to_embed)
-            
+
             # Prepare point for Qdrant
             point = models.PointStruct(
                 id=pr_data['id'],
                 vector=embedding.tolist(),
                 payload=pr_data
             )
-            
+
             # Upload to Qdrant
             self.qdrant_client.upsert(
                 collection_name="github_prs",
                 points=[point]
             )
-            
+
             print(f"Successfully uploaded PR #{pr_data['id']} to Qdrant")
         except Exception as e:
             print(f"Error processing and uploading PR: {str(e)}")
@@ -103,14 +103,14 @@ class GitHubPRToQdrant:
         try:
             # Generate embedding for query
             query_embedding = self.model.encode(query_text)
-            
+
             # Search in Qdrant
             search_result = self.qdrant_client.search(
                 collection_name="github_prs",
                 query_vector=query_embedding.tolist(),
                 limit=limit
             )
-            
+
             return [
                 {
                     "id": hit.id,
@@ -128,28 +128,28 @@ def main():
     try:
         # Initialize the integration
         pr_integration = GitHubPRToQdrant()
-        
+
         # Example: Fetch and upload a PR
         repo_name = "owner/repo"  # Replace with actual repo
         pr_number = 123  # Replace with actual PR number
-        
+
         # Fetch PR data
         pr_data = pr_integration.fetch_pr_data(repo_name, pr_number)
-        
+
         # Process and upload to Qdrant
         pr_integration.process_and_upload_pr(pr_data)
-        
+
         # Example: Search for similar PRs
         query = "Add new feature for user authentication"
         similar_prs = pr_integration.search_similar_prs(query)
-        
+
         print("\nSimilar PRs found:")
         for pr in similar_prs:
             print(f"PR #{pr['id']} - Score: {pr['score']}")
             print(f"Title: {pr['payload']['title']}\n")
-            
+
     except Exception as e:
         print(f"Error in main execution: {str(e)}")
 
 if __name__ == "__main__":
-    main() 
+    main()

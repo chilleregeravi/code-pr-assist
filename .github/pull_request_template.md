@@ -26,9 +26,9 @@ Fixes #
 
 ## Changes Made
 <!-- List the specific changes you've made -->
-- 
-- 
-- 
+-
+-
+-
 
 ## Testing
 <!-- Describe the tests you ran and their outcomes -->
@@ -65,4 +65,4 @@ Fixes #
 <!-- If applicable, add screenshots to help explain your changes -->
 
 ## Additional Notes
-<!-- Add any other information about the PR here --> 
+<!-- Add any other information about the PR here -->

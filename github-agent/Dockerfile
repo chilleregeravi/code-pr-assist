@@ -25,4 +25,4 @@ RUN pip install -e .
 ENV PYTHONPATH=/app/src
 
 # Command to run the application
-CMD ["python", "-m", "github_agent.main"] 
+CMD ["python", "-m", "github_agent.main"]

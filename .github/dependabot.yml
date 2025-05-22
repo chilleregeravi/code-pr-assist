@@ -50,4 +50,4 @@ updates:
       - dependency-type: "all"
     security-updates-only: false
     pull-request-branch-name:
-      separator: "-" 
+      separator: "-"

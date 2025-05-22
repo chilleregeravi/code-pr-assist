@@ -8,7 +8,7 @@ This development container is configured for Python development with GitHub Code
 - **Python 3.11** with pip and virtual environment support
 - **Code Formatting**: Black formatter with 88-character line length
 - **Import Sorting**: isort configured to work with Black
-- **Linting**: 
+- **Linting**:
   - Flake8 for style checking
   - MyPy for type checking
 - **Testing**: pytest with coverage support
@@ -127,4 +127,4 @@ You can customize the development environment by:
 This configuration uses the latest VS Code Python extension format. If you see warnings about deprecated settings, the configuration has been updated to use:
 - `[python]` language-specific settings instead of global `python.formatting.*`
 - Individual extension settings like `black-formatter.args` instead of deprecated options
-- Explicit action types like `"source.organizeImports": "explicit"` 
+- Explicit action types like `"source.organizeImports": "explicit"`

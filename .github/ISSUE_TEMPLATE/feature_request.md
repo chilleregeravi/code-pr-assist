@@ -34,4 +34,4 @@ assignees: ''
 <!-- Describe the impact this feature would have on users and the project -->
 
 ## Priority
-<!-- How important is this feature? (Low/Medium/High) --> 
+<!-- How important is this feature? (Low/Medium/High) -->

@@ -23,4 +23,4 @@ package-dir = {"" = "src"}
 [tool.pytest.ini_options]
 testpaths = ["src/tests"]
 python_files = ["test_*.py"]
-addopts = "-v --cov=database_agent" 
+addopts = "-v --cov=database_agent"

@@ -106,7 +106,7 @@ def get_pr_data(self, repo_name: str, pr_number: int) -> Dict[str, Any]
 - **Raises**: `PRProcessingError` if fetching fails
 
 ```python
-def get_repo_prs(self, repo_name: str, state: str = "all", sort: str = "updated", 
+def get_repo_prs(self, repo_name: str, state: str = "all", sort: str = "updated",
                 direction: str = "desc", limit: Optional[int] = None) -> Generator[Dict[str, Any], None, None]
 ```
 - **Purpose**: Fetch multiple PRs from a repository
@@ -215,7 +215,7 @@ Abstract interface defining vector store operations.
 ##### `QdrantStore`
 
 ```python
-def __init__(self, url: Optional[str] = None, api_key: Optional[str] = None, 
+def __init__(self, url: Optional[str] = None, api_key: Optional[str] = None,
             collection_name: str = "github_prs", embedding_model: str = "all-MiniLM-L6-v2",
             batch_size: int = 100)
 ```
@@ -235,7 +235,7 @@ def store_pr(self, pr_data: Dict[str, Any]) -> bool
 - **Inputs**:
   - `pr_data`: Dictionary containing PR information
 - **Returns**: True if successful
-- **Raises**: 
+- **Raises**:
   - `ConnectionError` if store not initialized
   - `VectorStoreError` if storing fails
 
@@ -246,7 +246,7 @@ def store_prs_batch(self, prs_data: List[Dict[str, Any]]) -> bool
 - **Inputs**:
   - `prs_data`: List of PR data dictionaries
 - **Returns**: True if successful
-- **Raises**: 
+- **Raises**:
   - `ConnectionError` if store not initialized
   - `VectorStoreError` if storing fails
 
@@ -258,7 +258,7 @@ def search_similar_prs(self, query: str, limit: int = 5) -> List[Dict[str, Any]]
   - `query`: Search query text
   - `limit`: Maximum number of results to return
 - **Returns**: List of similar PRs with their scores
-- **Raises**: 
+- **Raises**:
   - `ConnectionError` if store not initialized
   - `VectorStoreError` if search fails
 
@@ -269,7 +269,7 @@ def delete_pr(self, pr_id: int) -> bool
 - **Inputs**:
   - `pr_id`: ID of the PR to delete
 - **Returns**: True if successful
-- **Raises**: 
+- **Raises**:
   - `ConnectionError` if store not initialized
   - `VectorStoreError` if deletion fails
 
@@ -278,7 +278,7 @@ def delete_collection(self) -> bool
 ```
 - **Purpose**: Delete the entire collection
 - **Returns**: True if successful
-- **Raises**: 
+- **Raises**:
   - `ConnectionError` if store not initialized
   - `VectorStoreError` if deletion fails
 
@@ -326,4 +326,4 @@ pr_processor.delete_collection()
 - black (for code formatting)
 - isort (for import sorting)
 - flake8 (for linting)
-- mypy (for type checking) 
+- mypy (for type checking)
