@@ -120,6 +120,37 @@ The DevContainer configuration automatically:
 
 All configuration is **warning-free** and uses the latest VS Code Python extension formats.
 
+## 🛡️ Security
+
+This project includes comprehensive security scanning and monitoring:
+
+### Security Features
+- **CodeQL Analysis**: GitHub's semantic code analysis for vulnerabilities
+- **Bandit**: Python-specific security linting
+- **Semgrep**: Advanced static analysis for security patterns
+- **Safety**: Dependency vulnerability scanning
+- **Pre-commit hooks**: Automatic security checks before commits
+- **Weekly security scans**: Automated via GitHub Actions
+
+### Local Security Testing
+Run a comprehensive security scan locally:
+```bash
+./.github/scripts/security-scan.sh
+```
+
+This will:
+- Scan Python code for security vulnerabilities (Bandit)
+- Check dependencies for known vulnerabilities (Safety)
+- Run advanced security pattern detection (Semgrep)
+- Generate detailed reports in `security-reports/`
+
+### Scripts Location
+All scripts are organized under `.github/scripts/`:
+- `security-scan.sh` - Comprehensive security scanning
+- `setup-labels.sh` - GitHub repository label setup
+
+See [Security Policy](.github/security.md) for complete security documentation.
+
 ## Requirements
 
 - Python 3.11+
