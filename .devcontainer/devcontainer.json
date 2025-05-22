@@ -1,0 +1,22 @@
+{
+    "name": "Python DevContainer for Codespaces & Cursor",
+    "build": {
+        "dockerfile": "Dockerfile"
+    },
+    "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python3",
+        "terminal.integrated.defaultProfile.linux": "bash"
+    },
+    "postCreateCommand": "pip install -r database-agent/requirements.txt -r github-agent/requirements.txt && pip install pytest mypy",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "ms-toolsai.jupyter"
+            ]
+        }
+    },
+    "remoteUser": "vscode",
+    "workspaceFolder": "/workspaces/code-pr-assist"
+}
