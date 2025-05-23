@@ -51,7 +51,7 @@
             ]
         }
     },
-    "postCreateCommand": "pip install -r database-agent/requirements.txt -r github-agent/requirements.txt && pip install pytest ruff black isort pre-commit && pre-commit install && python -c \"import json; s=json.load(open('.vscode/settings.json')); t=json.load(open('.vscode/settings.template.json')); s.update(t); json.dump(s, open('.vscode/settings.json', 'w'), indent=4)\"",
+    "postCreateCommand": "pip install --upgrade pip && pip install -r database-agent/requirements.txt -r database-agent/requirements-dev.txt -r github-agent/requirements.txt -r github-agent/requirements-dev.txt && pip install -e database-agent/ -e github-agent/ && pre-commit install && python -c \"import json; s=json.load(open('.vscode/settings.json')); t=json.load(open('.vscode/settings.template.json')); s.update(t); json.dump(s, open('.vscode/settings.json', 'w'), indent=4)\"",
     "containerEnv": {
         "PYTHONPATH": "/workspaces/code-pr-assist",
         "PYTHONUNBUFFERED": "1",

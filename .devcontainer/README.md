@@ -35,14 +35,17 @@ This development container is configured for Python development with GitHub Code
 - **6333**: Qdrant Vector Database
 
 ### Development Tasks (Ctrl+Shift+P → "Tasks: Run Task")
-- **Run GitHub Agent Tests**: Execute tests for the GitHub agent
-- **Run Database Agent Tests**: Execute tests for the database agent
-- **Format GitHub Agent Code**: Format code using Black
-- **Format Database Agent Code**: Format code using Black
+- **Run GitHub Agent Tests**: Execute tests with coverage for the GitHub agent
+- **Run Database Agent Tests**: Execute tests with coverage for the database agent
+- **Run All Tests**: Execute all tests for both agents from the root directory
+- **Install Dependencies**: Install all required dependencies for both agents
+- **Format GitHub Agent Code**: Format code using Black (includes import sorting)
+- **Format Database Agent Code**: Format code using Black (includes import sorting)
 - **Sort GitHub Agent Imports**: Organize imports using isort
 - **Sort Database Agent Imports**: Organize imports using isort
 - **Lint GitHub Agent**: Check code style with ruff
 - **Lint Database Agent**: Check code style with ruff
+- **Lint All**: Run ruff checks on the entire project
 - **Start GitHub Agent**: Launch the GitHub agent service
 - **Start Database Agent**: Launch the database agent service
 
