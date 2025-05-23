@@ -3,24 +3,77 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "database-agent"
+name = "database_agent"
 version = "0.1.0"
 authors = [
     { name = "Ravi Chillerega", email = "chilleregeravi@gmail.com" },
 ]
 description = "A database agent for processing and storing PR data"
-requires-python = ">=3.8"
+requires-python = ">=3.11"
 dependencies = [
+    # Database agent specific dependencies
     "qdrant-client",
     "sentence-transformers",
     "PyGithub",
     "numpy",
+    "opentelemetry-api",
+    "opentelemetry-sdk",
+    "opentelemetry-exporter-otlp",
+    "pydantic",
+    "python-dotenv",
+    "requests",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.0",
+    "pytest-cov>=6.0",
+    "pytest-asyncio>=0.26",
+    "pytest-mock>=3.14",
+    "httpx>=0.26",
+]
+
+dev = [
+    "black>=25.0",
+    "isort>=6.0",
+    "ruff>=0.11",
+    "mypy>=1.15",
 ]
 
 [tool.setuptools]
 package-dir = {"" = "src"}
+packages = ["database_agent"]
 
+# Agent-specific test configuration
 [tool.pytest.ini_options]
+addopts = [
+    "-v",
+    "--cov=src/database_agent",
+    "--cov-report=term-missing",
+    "--cov-report=xml:coverage.xml",
+    "--cov-fail-under=80",
+]
 testpaths = ["src/tests"]
+pythonpath = ["src"]
 python_files = ["test_*.py"]
-addopts = "-v --cov=database_agent"
+asyncio_mode = "auto"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::UserWarning",
+]
+
+[tool.coverage.run]
+source = ["src/database_agent"]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "pass",
+    "raise ImportError",
+]
+fail_under = 80

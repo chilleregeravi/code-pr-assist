@@ -3,19 +3,42 @@
 import logging
 import os
 import time
+from collections.abc import Generator
 from datetime import datetime
 from functools import wraps
-from typing import Any, Dict, Generator, List, Optional
+from typing import Any
 
 from github import Github, GithubException
 from github.PullRequest import PullRequest
 from github.Repository import Repository
-from opentelemetry import trace
+
+try:
+    from opentelemetry import trace
+
+    tracer = trace.get_tracer(__name__)
+    TRACING_AVAILABLE = True
+except ImportError:
+    # Create a no-op tracer for when OpenTelemetry is not available
+    class NoOpSpan:
+        def set_attribute(self, key: str, value: Any) -> None:
+            pass
+
+        def __enter__(self) -> "NoOpSpan":
+            return self
+
+        def __exit__(self, *args: Any) -> None:
+            pass
+
+    class NoOpTracer:
+        def start_as_current_span(self, name: str) -> NoOpSpan:
+            return NoOpSpan()
+
+    tracer = NoOpTracer()  # type: ignore
+    TRACING_AVAILABLE = False
 
 from .exceptions import PRProcessingError
 
 logger = logging.getLogger(__name__)
-tracer = trace.get_tracer(__name__)
 
 
 def rate_limit(func):
@@ -63,8 +86,8 @@ class GitHubClient:
 
     def __init__(
         self,
-        token: Optional[str] = None,
-        base_url: Optional[str] = None,
+        token: str | None = None,
+        base_url: str | None = None,
         pr_processor: Any = None,
     ):
         """Initialize GitHub client.
@@ -89,7 +112,7 @@ class GitHubClient:
 
     @rate_limit
     @retry()
-    def get_pr_data(self, repo_name: str, pr_number: int) -> Dict[str, Any]:
+    def get_pr_data(self, repo_name: str, pr_number: int) -> dict[str, Any]:
         with tracer.start_as_current_span("GitHubClient.get_pr_data") as span:
             span.set_attribute("repo_name", repo_name)
             span.set_attribute("pr_number", pr_number)
@@ -154,7 +177,7 @@ class GitHubClient:
                 return pr_data
 
             except GithubException as e:
-                raise PRProcessingError(f"Failed to fetch PR data: {str(e)}")
+                raise PRProcessingError(f"Failed to fetch PR data: {e!s}") from e
 
     def get_repo_prs(
         self,
@@ -162,8 +185,8 @@ class GitHubClient:
         state: str = "all",
         sort: str = "updated",
         direction: str = "desc",
-        limit: Optional[int] = None,
-    ) -> Generator[Dict[str, Any], None, None]:
+        limit: int | None = None,
+    ) -> Generator[dict[str, Any], None, None]:
         with tracer.start_as_current_span("GitHubClient.get_repo_prs") as span:
             span.set_attribute("repo_name", repo_name)
             span.set_attribute("state", state)
@@ -182,14 +205,14 @@ class GitHubClient:
                     count += 1
 
             except GithubException as e:
-                raise PRProcessingError(f"Failed to fetch repository PRs: {str(e)}")
+                raise PRProcessingError(f"Failed to fetch repository PRs: {e!s}") from e
 
     def process_and_store_prs(
         self,
         pr_processor,
         repo_name: str,
         state: str = "all",
-        limit: Optional[int] = None,
+        limit: int | None = None,
     ) -> None:
         with tracer.start_as_current_span("GitHubClient.process_and_store_prs") as span:
             span.set_attribute("repo_name", repo_name)
@@ -211,9 +234,11 @@ class GitHubClient:
                     self._process_batch(pr_processor, batch)
 
             except Exception as e:
-                raise PRProcessingError(f"Failed to process repository PRs: {str(e)}")
+                raise PRProcessingError(
+                    f"Failed to process repository PRs: {e!s}"
+                ) from e
 
-    def _process_batch(self, pr_processor, batch: List[Dict[str, Any]]) -> None:
+    def _process_batch(self, pr_processor, batch: list[dict[str, Any]]) -> None:
         """Process a batch of PRs.
 
         Args:
@@ -224,12 +249,12 @@ class GitHubClient:
             try:
                 pr_processor.process_and_store_pr(pr_data)
             except Exception as e:
-                logger.error(f"Failed to process PR #{pr_data['id']}: {str(e)}")
+                logger.error(f"Failed to process PR #{pr_data['id']}: {e!s}")
                 continue
 
     def search_prs(
-        self, pr_processor, query: str, repo_name: Optional[str] = None, limit: int = 5
-    ) -> List[Dict[str, Any]]:
+        self, pr_processor, query: str, repo_name: str | None = None, limit: int = 5
+    ) -> list[dict[str, Any]]:
         """Search for similar PRs in the vector database.
 
         Args:
@@ -266,9 +291,9 @@ class GitHubClient:
         try:
             return self.client.get_repo(repo_name)
         except GithubException as e:
-            raise PRProcessingError(f"Failed to fetch repository: {str(e)}")
+            raise PRProcessingError(f"Failed to fetch repository: {e!s}") from e
 
-    def get_pull_requests(self, repo_name: str) -> List[PullRequest]:
+    def get_pull_requests(self, repo_name: str) -> list[PullRequest]:
         """Get all pull requests for a repository.
 
         Args:
@@ -284,9 +309,9 @@ class GitHubClient:
             repo = self.get_repository(repo_name)
             return list(repo.get_pulls())
         except GithubException as e:
-            raise PRProcessingError(f"Failed to fetch pull requests: {str(e)}")
+            raise PRProcessingError(f"Failed to fetch pull requests: {e!s}") from e
 
-    def get_pull_request_comments(self, repo_name: str, pr_number: int) -> List[str]:
+    def get_pull_request_comments(self, repo_name: str, pr_number: int) -> list[str]:
         """Get comments for a pull request.
 
         Args:
@@ -304,9 +329,9 @@ class GitHubClient:
             pr = repo.get_pull(pr_number)
             return [comment.body for comment in pr.get_issue_comments()]
         except GithubException as e:
-            raise PRProcessingError(f"Failed to fetch comments: {str(e)}")
+            raise PRProcessingError(f"Failed to fetch comments: {e!s}") from e
 
-    def get_pull_request_labels(self, repo_name: str, pr_number: int) -> List[str]:
+    def get_pull_request_labels(self, repo_name: str, pr_number: int) -> list[str]:
         """Get labels for a pull request.
 
         Args:
@@ -324,7 +349,7 @@ class GitHubClient:
             pr = repo.get_pull(pr_number)
             return [label.name for label in pr.labels]
         except GithubException as e:
-            raise PRProcessingError(f"Failed to fetch labels: {str(e)}")
+            raise PRProcessingError(f"Failed to fetch labels: {e!s}") from e
 
     def get_pull_request_state(self, repo_name: str, pr_number: int) -> str:
         """Get state of a pull request.
@@ -344,7 +369,7 @@ class GitHubClient:
             pr = repo.get_pull(pr_number)
             return pr.state
         except GithubException as e:
-            raise PRProcessingError(f"Failed to fetch state: {str(e)}")
+            raise PRProcessingError(f"Failed to fetch state: {e!s}") from e
 
     def get_pull_request_dates(
         self, repo_name: str, pr_number: int
@@ -368,7 +393,7 @@ class GitHubClient:
                 raise PRProcessingError("PR missing created_at or updated_at")
             return pr.created_at, pr.updated_at
         except GithubException as e:
-            raise PRProcessingError(f"Failed to fetch dates: {str(e)}")
+            raise PRProcessingError(f"Failed to fetch dates: {e!s}") from e
 
     def process_repository_prs(self, repo_name: str, processor: Any) -> None:
         """Process all PRs in a repository.
@@ -385,7 +410,7 @@ class GitHubClient:
                 pr_data = self._extract_pr_data(pr)
                 processor.process_pr(pr_data)
         except Exception as e:
-            raise PRProcessingError(f"Failed to process repository PRs: {str(e)}")
+            raise PRProcessingError(f"Failed to process repository PRs: {e!s}") from e
 
     def _extract_pr_data(self, pr: Any) -> dict:
         # Stub implementation to satisfy mypy; replace with real logic as needed

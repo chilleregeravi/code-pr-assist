@@ -1,17 +1,18 @@
 # main.py
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
 
 import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from opentelemetry import trace
+
 from github_agent.agents.embedding_agent import EmbeddingAgent
 from github_agent.agents.github_agent import GitHubAgent
 from github_agent.agents.llm_agent import LLMAgent
 from github_agent.config import SERVER_HOST, SERVER_PORT
 from github_agent.models import PullRequestData
 from github_agent.tracing import setup_tracing
-from opentelemetry import trace
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -28,13 +29,13 @@ tracer = trace.get_tracer(__name__)
 
 
 @app.get("/")
-async def root() -> Dict[str, str]:
+async def root() -> dict[str, str]:
     """Root endpoint."""
     return {"message": "GitHub PR Agent - OpenAI-powered PR analysis"}
 
 
 @app.get("/health")
-async def health() -> Dict[str, str]:
+async def health() -> dict[str, str]:
     """Health check endpoint."""
     return {"status": "healthy"}
 
@@ -44,7 +45,7 @@ async def handle_pr_webhook(request: Request) -> JSONResponse:
     """Handle GitHub PR webhook events."""
     with tracer.start_as_current_span("webhook_handler") as span:
         # Check for required header
-        event_type: Optional[str] = request.headers.get("X-GitHub-Event")
+        event_type: str | None = request.headers.get("X-GitHub-Event")
         span.set_attribute("github.event_type", event_type or "missing")
         if not event_type:
             return JSONResponse(
@@ -54,18 +55,19 @@ async def handle_pr_webhook(request: Request) -> JSONResponse:
         # Validate event type
         if event_type != "pull_request":
             return JSONResponse(
-                content={"detail": f"Unsupported event type: {event_type}"}, status_code=400
+                content={"detail": f"Unsupported event type: {event_type}"},
+                status_code=400,
             )
 
         try:
-            data: Dict[str, Any] = await request.json()
+            data: dict[str, Any] = await request.json()
             if "pull_request" not in data or "action" not in data:
                 logger.info("Webhook received without required data.")
                 return JSONResponse(
                     content={"detail": "Missing required fields"}, status_code=422
                 )
 
-            pr_info: Dict[str, Any] = data["pull_request"]
+            pr_info: dict[str, Any] = data["pull_request"]
             required_fields = ["title", "body", "number", "diff_url"]
             if not all(field in pr_info for field in required_fields):
                 logger.error("Missing required PR fields in webhook payload.")

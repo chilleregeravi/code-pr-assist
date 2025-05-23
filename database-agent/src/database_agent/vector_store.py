@@ -2,9 +2,32 @@
 
 import os
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-from opentelemetry import trace
+try:
+    from opentelemetry import trace
+
+    tracer = trace.get_tracer(__name__)
+    TRACING_AVAILABLE = True
+except ImportError:
+    # Create a no-op tracer for when OpenTelemetry is not available
+    class NoOpSpan:
+        def set_attribute(self, key: str, value: Any) -> None:
+            pass
+
+        def __enter__(self) -> "NoOpSpan":
+            return self
+
+        def __exit__(self, *args: Any) -> None:
+            pass
+
+    class NoOpTracer:
+        def start_as_current_span(self, name: str) -> NoOpSpan:
+            return NoOpSpan()
+
+    tracer = NoOpTracer()  # type: ignore
+    TRACING_AVAILABLE = False
+
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
 from sentence_transformers import SentenceTransformer
@@ -16,8 +39,6 @@ from .exceptions import (
     VectorStoreError,
 )
 
-tracer = trace.get_tracer(__name__)
-
 
 class VectorStore(ABC):
     """Abstract base class for vector stores."""
@@ -27,19 +48,19 @@ class VectorStore(ABC):
         """Initialize the vector store connection and collections."""
 
     @abstractmethod
-    def store_pr(self, pr_data: Dict[str, Any]) -> bool:
+    def store_pr(self, pr_data: dict[str, Any]) -> bool:
         """Store PR data in the vector store. Returns True on success."""
 
     @abstractmethod
-    def store_prs_batch(self, prs_data: List[Dict[str, Any]]) -> bool:
+    def store_prs_batch(self, prs_data: list[dict[str, Any]]) -> bool:
         """Store multiple PRs in the vector store. Returns True on success."""
 
     @abstractmethod
-    def search_similar_prs(self, query: str, limit: int = 5) -> List[Dict[str, Any]]:
+    def search_similar_prs(self, query: str, limit: int = 5) -> list[dict[str, Any]]:
         """Search for similar PRs based on the query."""
 
     @abstractmethod
-    def get_pr(self, pr_id: int) -> Optional[Dict[str, Any]]:
+    def get_pr(self, pr_id: int) -> dict[str, Any] | None:
         """Retrieve a specific PR by ID."""
 
     @abstractmethod
@@ -56,8 +77,8 @@ class QdrantStore(VectorStore):
 
     def __init__(
         self,
-        url: Optional[str] = None,
-        api_key: Optional[str] = None,
+        url: str | None = None,
+        api_key: str | None = None,
         collection_name: str = "github_prs",
         embedding_model: str = "all-MiniLM-L6-v2",
         batch_size: int = 100,
@@ -82,9 +103,9 @@ class QdrantStore(VectorStore):
         self.embedding_model = embedding_model
         self.batch_size = batch_size
 
-        self.client: Optional[QdrantClient] = None
-        self.model: Optional[SentenceTransformer] = None
-        self.vector_size: Optional[int] = None
+        self.client: QdrantClient | None = None
+        self.model: SentenceTransformer | None = None
+        self.vector_size: int | None = None
 
     def initialize(self) -> None:
         """Initialize Qdrant client and create collection if it doesn't exist."""
@@ -111,9 +132,9 @@ class QdrantStore(VectorStore):
                 )
 
         except Exception as e:
-            raise ConnectionError(f"Failed to initialize Qdrant store: {str(e)}")
+            raise ConnectionError(f"Failed to initialize Qdrant store: {e!s}") from e
 
-    def _generate_embedding(self, text: str) -> List[float]:
+    def _generate_embedding(self, text: str) -> list[float]:
         """Generate embedding for text.
 
         Args:
@@ -132,15 +153,17 @@ class QdrantStore(VectorStore):
             embedding = self.model.encode(text)
             return embedding.tolist()
         except Exception as e:
-            raise EmbeddingError(f"Failed to generate embedding: {str(e)}")
+            raise EmbeddingError(f"Failed to generate embedding: {e!s}") from e
 
     def generate_embedding(self, text: str):
         """Public method to generate embedding for test mocks."""
         return self._generate_embedding(text)
 
-    def store_pr(self, pr_data: Dict[str, Any]) -> bool:
+    def store_pr(self, pr_data: dict[str, Any]) -> bool:
         with tracer.start_as_current_span("VectorStore.store_pr") as span:
-            span.set_attribute("pr.id", pr_data.get("id"))
+            pr_id = pr_data.get("id")
+            if pr_id is not None:
+                span.set_attribute("pr.id", pr_id)
             if not self.client or not self.model:
                 raise ConnectionError("Qdrant store not initialized")
             try:
@@ -152,9 +175,9 @@ class QdrantStore(VectorStore):
                 self.client.upsert(collection_name=self.collection_name, points=[point])
                 return True
             except Exception as e:
-                raise VectorStoreError(f"Failed to store PR data: {str(e)}")
+                raise VectorStoreError(f"Failed to store PR data: {e!s}") from e
 
-    def store_prs_batch(self, prs_data: List[Dict[str, Any]]) -> bool:
+    def store_prs_batch(self, prs_data: list[dict[str, Any]]) -> bool:
         with tracer.start_as_current_span("VectorStore.store_prs_batch") as span:
             span.set_attribute("prs.count", len(prs_data))
             if not self.client or not self.model:
@@ -170,12 +193,14 @@ class QdrantStore(VectorStore):
                             id=pr_data["id"], vector=embedding, payload=pr_data
                         )
                         points.append(point)
-                    self.client.upsert(collection_name=self.collection_name, points=points)
+                    self.client.upsert(
+                        collection_name=self.collection_name, points=points
+                    )
                 return True
             except Exception as e:
-                raise VectorStoreError(f"Failed to store PRs batch: {str(e)}")
+                raise VectorStoreError(f"Failed to store PRs batch: {e!s}") from e
 
-    def search_similar_prs(self, query: str, limit: int = 5) -> List[Dict[str, Any]]:
+    def search_similar_prs(self, query: str, limit: int = 5) -> list[dict[str, Any]]:
         with tracer.start_as_current_span("VectorStore.search_similar_prs") as span:
             span.set_attribute("query", query)
             span.set_attribute("limit", limit)
@@ -199,9 +224,9 @@ class QdrantStore(VectorStore):
                 ]
 
             except Exception as e:
-                raise VectorStoreError(f"Failed to search similar PRs: {str(e)}")
+                raise VectorStoreError(f"Failed to search similar PRs: {e!s}") from e
 
-    def get_pr(self, pr_id: int) -> Optional[Dict[str, Any]]:
+    def get_pr(self, pr_id: int) -> dict[str, Any] | None:
         if not self.client:
             raise ConnectionError("Qdrant store not initialized")
         try:
@@ -216,7 +241,7 @@ class QdrantStore(VectorStore):
                 return {"id": pr_id, "title": ""}
             return {"id": pr_id, "title": payload.get("title", "")}
         except Exception as e:
-            raise VectorStoreError(f"Failed to retrieve PR: {str(e)}")
+            raise VectorStoreError(f"Failed to retrieve PR: {e!s}") from e
 
     def delete_pr(self, pr_id: int) -> bool:
         if not self.client:
@@ -228,7 +253,7 @@ class QdrantStore(VectorStore):
             )
             return True
         except Exception as e:
-            raise VectorStoreError(f"Failed to delete PR: {str(e)}")
+            raise VectorStoreError(f"Failed to delete PR: {e!s}") from e
 
     def delete_collection(self) -> bool:
         if not self.client:
@@ -237,4 +262,4 @@ class QdrantStore(VectorStore):
             self.client.delete_collection(collection_name=self.collection_name)
             return True
         except Exception as e:
-            raise VectorStoreError(f"Failed to delete collection: {str(e)}")
+            raise VectorStoreError(f"Failed to delete collection: {e!s}") from e

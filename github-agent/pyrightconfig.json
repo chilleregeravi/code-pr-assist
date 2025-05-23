@@ -1,0 +1,30 @@
+{
+    "include": [
+        "src"
+    ],
+    "exclude": [
+        ".venv",
+        "**/__pycache__",
+        ".pytest_cache",
+        ".mypy_cache"
+    ],
+    "venvPath": ".",
+    "venv": ".venv",
+    "pythonVersion": "3.11",
+    "pythonPlatform": "Darwin",
+    "executionEnvironments": [
+        {
+            "root": "src",
+            "pythonVersion": "3.11",
+            "pythonPlatform": "Darwin",
+            "extraPaths": [
+                "src"
+            ]
+        }
+    ],
+    "typeCheckingMode": "basic",
+    "useLibraryCodeForTypes": true,
+    "autoImportCompletions": true,
+    "autoSearchPaths": true,
+    "stubPath": ".venv/lib/python3.11/site-packages"
+}

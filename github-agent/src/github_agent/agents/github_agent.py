@@ -1,4 +1,5 @@
 import logging
+
 from opentelemetry import trace
 
 from github_agent.github_utils import post_comment_to_pr

@@ -4,6 +4,7 @@ from datetime import datetime
 from unittest.mock import MagicMock
 
 import pytest
+
 from database_agent.exceptions import PRProcessingError
 from database_agent.pr_processor import PRProcessor
 

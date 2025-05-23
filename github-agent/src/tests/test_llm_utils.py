@@ -1,7 +1,8 @@
-from typing import Generator
+from collections.abc import Generator
 from unittest.mock import Mock, patch
 
 import pytest
+
 from github_agent.llm_utils import gpt_summarize_with_context
 
 

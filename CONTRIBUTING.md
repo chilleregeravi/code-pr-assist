@@ -68,11 +68,15 @@ Our development workflow includes **automatic code quality checks** that run bef
 When you commit code, these checks run automatically:
 - ✅ **Black formatting** (88-character line length)
 - ✅ **isort import sorting** (compatible with Black)
-- ✅ **flake8 linting** (style and quality checks)
-- ✅ **Full test suite** (all tests must pass)
-- ✅ **Merge conflict detection**
-- ✅ **YAML validation**
-- ✅ **Trailing whitespace cleanup**
+- ✅ **Ruff linting** (fast, comprehensive style and quality checks)
+- ✅ **Bandit security scanning** (security vulnerability detection)
+- ✅ **Basic file checks** (trailing whitespace, merge conflicts, YAML validation)
+
+**Note**: Our pre-commit pipeline is optimized to avoid tool conflicts:
+- **No duplicate formatting**: Only Black handles code formatting
+- **No import conflicts**: Only isort handles import sorting
+- **No mypy in pre-commit**: Available for manual use to reduce setup friction
+- **Fast execution**: Ruff replaces multiple slower tools
 
 ### Verification
 After setup, test that pre-commit works:
@@ -82,12 +86,17 @@ echo "# Test" >> README.md
 git add README.md
 git commit -m "test: Verify pre-commit hooks"
 
-# You should see:
-# black....................................................................Passed
-# isort....................................................................Passed
-# flake8...................................................................Passed
-# GitHub Agent Tests.......................................................Passed
-# Database Agent Tests.....................................................Passed
+# You should see output like:
+# Trim Trailing Whitespace.............................................Passed
+# Fix End of Files...................................................Passed
+# Check Yaml.........................................................Passed
+# Check for added large files........................................Passed
+# Check for merge conflicts..........................................Passed
+# Debug Statements (Python)..........................................Passed
+# black..............................................................Passed
+# isort..............................................................Passed
+# ruff...............................................................Passed
+# bandit.............................................................Passed
 ```
 
 ## 🧪 Testing
@@ -140,11 +149,26 @@ isort --check-only --diff src/
 - **Consistent import ordering** (standard, third-party, local)
 
 ### Code Quality Tools
-- **Black**: Automatic code formatting
-- **isort**: Import sorting and organization
-- **flake8**: Style checking and basic linting
-- **mypy**: Static type checking (manual)
-- **pytest**: Testing framework with coverage
+- **Black**: Automatic code formatting (88-character lines)
+- **isort**: Import sorting and organization (black-compatible)
+- **Ruff**: Fast linting (replaces flake8, pylint, pycodestyle, etc.)
+- **Bandit**: Security vulnerability scanning
+- **mypy**: Static type checking (manual use - not in pre-commit)
+- **pytest**: Testing framework with coverage reporting
+
+### Manual Type Checking
+While mypy is not included in pre-commit hooks (to reduce setup complexity),
+you can run it manually for type checking:
+
+```bash
+# Run type checking manually
+cd github-agent
+source .venv/bin/activate
+mypy src/github_agent/
+
+# Or use the Makefile command
+make type-check
+```
 
 ## 📝 Development Workflow
 
@@ -183,8 +207,8 @@ git push origin feature/your-feature-name
 make setup         # Setup environment + install pre-commit hooks
 make test          # Run tests with coverage
 make format        # Format code with Black and isort
-make lint          # Check code style with flake8
-make type-check    # Run mypy type checking
+make lint          # Check code style with ruff
+make type-check    # Run mypy type checking (manual)
 make clean         # Clean up cache files
 make run           # Start the service
 ```

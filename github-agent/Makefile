@@ -1,7 +1,18 @@
-include ../Makefile.common
+# GitHub Agent Makefile - delegates to root Makefile
+.PHONY: test lint format clean install
 
+# Delegate common commands to root Makefile
 test:
-	. .venv/bin/activate && \
-	pip install -e . && \
-	pip install -r requirements-test.txt && \
-	pytest -v --cov=src/github_agent --cov-report=term-missing --cov-report=xml:coverage.xml
+	cd .. && make test-github
+
+lint:
+	cd .. && make lint
+
+format:
+	cd .. && make format
+
+clean:
+	cd .. && make clean
+
+install:
+	cd .. && make install-dev

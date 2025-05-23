@@ -1,7 +1,8 @@
 import logging
-from opentelemetry import trace
 
 from github import Github
+from opentelemetry import trace
+
 from github_agent.config import GITHUB_TOKEN, REPO_NAME
 
 logger = logging.getLogger(__name__)

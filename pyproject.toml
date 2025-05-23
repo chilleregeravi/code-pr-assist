@@ -1,2 +1,296 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "code-pr-assist"
+version = "0.1.0"
+description = "AI-powered code analysis and PR assistance system"
+authors = [
+    { name = "Ravi Chillerega", email = "chilleregeravi@gmail.com" },
+]
+readme = "README.md"
+requires-python = ">=3.11"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    # Core dependencies shared across agents
+    "fastapi>=0.115.0",
+    "uvicorn>=0.34.0",
+    "pydantic>=2.11.0",
+    "python-dotenv>=1.1.0",
+    "PyGithub>=2.6.0",
+    "openai>=1.79.0",
+    "qdrant-client>=1.14.0",
+    "sentence-transformers>=4.1.0",
+    "requests>=2.32.0",
+    "numpy>=2.2.0",
+    "scikit-learn>=1.6.0",
+    "transformers>=4.51.0",
+    "opentelemetry-api>=1.25.0",
+    "opentelemetry-sdk>=1.25.0",
+    "opentelemetry-exporter-otlp>=1.25.0",
+    "protobuf>=4.25.0,<6.0",  # Unified version
+]
+
+[project.optional-dependencies]
+dev = [
+    # Testing
+    "pytest>=8.0",
+    "pytest-asyncio>=0.26",
+    "pytest-cov>=6.0",
+    "pytest-mock>=3.14",
+    "pytest-xdist>=3.0",  # Parallel testing
+    "httpx>=0.26",  # For FastAPI testing
+
+    # Code quality
+    "black>=25.0",
+    "isort>=6.0",
+    "ruff>=0.11",  # Fast linter/formatter
+    "mypy>=1.15",
+    "pre-commit>=4.0",
+
+    # Documentation
+    "mkdocs>=1.6",
+    "mkdocs-material>=9.0",
+
+    # Security
+    "bandit>=1.7",
+    "safety>=3.0",
+    "semgrep>=1.0",
+]
+
+test = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.26",
+    "pytest-cov>=6.0",
+    "pytest-mock>=3.14",
+    "httpx>=0.26",
+]
+
+lint = [
+    "black>=25.0",
+    "isort>=6.0",
+    "ruff>=0.11",
+    "mypy>=1.15",
+]
+
+[project.urls]
+Homepage = "https://github.com/ravichillerega/code-pr-assist"
+Repository = "https://github.com/ravichillerega/code-pr-assist"
+Issues = "https://github.com/ravichillerega/code-pr-assist/issues"
+
+# Tool configurations
+[tool.black]
+line-length = 88
+target-version = ["py311"]
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.pytest_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
 [tool.isort]
 profile = "black"
+line_length = 88
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+src_paths = ["github-agent/src", "database-agent/src"]
+skip_gitignore = true
+known_first_party = ["github_agent", "database_agent"]
+known_third_party = ["numpy", "openai", "qdrant_client", "opentelemetry", "fastapi", "pydantic"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+src = ["github-agent/src", "database-agent/src"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "C",   # flake8-comprehensions
+    "B",   # flake8-bugbear
+    "UP",  # pyupgrade
+    "N",   # pep8-naming
+    "S",   # flake8-bandit (security)
+    "RUF", # Ruff-specific rules
+]
+ignore = [
+    "E203",  # whitespace before ':'
+    "E501",  # line too long (handled by black)
+    "S101",  # assert statements (common in tests)
+    "C901",  # complex-structure (function complexity)
+    "I001",  # import sorting (handled by isort)
+]
+per-file-ignores = {"**/tests/*" = ["S101", "S105", "S106", "S311"]}  # Allow assert, hardcoded passwords, and pseudo-random in tests
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+mypy_path = ["github-agent/src", "database-agent/src"]
+
+[[tool.mypy.overrides]]
+module = [
+    "qdrant_client.*",
+    "sentence_transformers.*",
+    "transformers.*",
+    "sklearn.*",
+    "github.*",
+    "opentelemetry.*",
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = [
+    "-v",
+    "--strict-markers",
+    "--strict-config",
+    "--tb=short",
+    "--cov=github-agent/src",
+    "--cov=database-agent/src",
+    "--cov-report=term-missing",
+    "--cov-report=xml:coverage.xml",
+    "--cov-report=html:htmlcov",
+    "--cov-fail-under=80",
+    "--durations=10",
+]
+testpaths = [
+    "github-agent/src/tests",
+    "database-agent/src/tests",
+]
+pythonpath = [
+    "github-agent/src",
+    "database-agent/src",
+]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::UserWarning",
+    "ignore::PendingDeprecationWarning",
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+]
+
+[tool.coverage.run]
+source = [
+    "github-agent/src/github_agent",
+    "database-agent/src/database_agent",
+]
+branch = true
+parallel = true
+context = '${CONTEXT}'
+
+[tool.coverage.paths]
+source = [
+    "github-agent/src/",
+    "database-agent/src/",
+    "*/site-packages/",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+    "pass",
+    "\\.\\.\\.",
+]
+show_missing = true
+skip_covered = false
+fail_under = 80
+
+[tool.coverage.html]
+directory = "htmlcov"
+
+[tool.coverage.xml]
+output = "coverage.xml"
+
+[tool.bandit]
+exclude_dirs = ["tests", ".venv", "build", "dist"]
+tests = ["B201", "B301"]
+skips = ["B101", "B601"]
+
+[tool.bandit.any_other_function_with_shell_equals_true]
+no_shell = [
+    "os.execl",
+    "os.execle",
+    "os.execlp",
+    "os.execlpe",
+    "os.execv",
+    "os.execve",
+    "os.execvp",
+    "os.execvpe",
+    "os.spawnl",
+    "os.spawnle",
+    "os.spawnlp",
+    "os.spawnlpe",
+    "os.spawnv",
+    "os.spawnve",
+    "os.spawnvp",
+    "os.spawnvpe",
+    "os.startfile"
+]
+shell = [
+    "os.system",
+    "os.popen",
+    "os.popen2",
+    "os.popen3",
+    "os.popen4",
+    "popen2.popen2",
+    "popen2.popen3",
+    "popen2.popen4",
+    "popen2.Popen3",
+    "popen2.Popen4",
+    "commands.getoutput",
+    "commands.getstatusoutput"
+]
+subprocess = [
+    "subprocess.Popen",
+    "subprocess.call",
+    "subprocess.check_call",
+    "subprocess.check_output"
+]

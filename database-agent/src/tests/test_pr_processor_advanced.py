@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock
 
 import pytest
+
 from database_agent.exceptions import DataValidationError, PRProcessingError
 from database_agent.pr_processor import PRProcessor
 
@@ -106,7 +107,7 @@ def test_process_and_store_pr_store_error(processor, valid_pr):
     processor.validate_pr_data = MagicMock()
     processor.transform_pr_data = MagicMock(return_value=valid_pr)
     processor.vector_store.store_pr.side_effect = Exception("fail")
-    with pytest.raises(Exception):
+    with pytest.raises(PRProcessingError):
         processor.process_and_store_pr(valid_pr)
 
 

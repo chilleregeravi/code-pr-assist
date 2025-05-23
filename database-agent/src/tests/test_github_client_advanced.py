@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
+
 from database_agent.github_client import GitHubClient, PRProcessingError
 
 
@@ -53,7 +54,7 @@ def test_get_pr_data_error():
         client = GitHubClient(token="test-token")
         mock_instance = mock.return_value
         mock_instance.get_repo.side_effect = Exception("fail")
-        with pytest.raises(Exception):
+        with pytest.raises(PRProcessingError):
             client.get_pr_data("owner/repo", 1)
 
 

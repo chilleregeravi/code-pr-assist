@@ -1,0 +1,24 @@
+{
+    "python.pythonPath": "./.venv/bin/python",
+    "python.defaultInterpreterPath": "./.venv/bin/python",
+    "python.terminal.activateEnvironment": true,
+    "python.analysis.extraPaths": [
+        "./src",
+        "./.venv/lib/python3.11/site-packages"
+    ],
+    "python.analysis.autoImportCompletions": true,
+    "python.analysis.typeCheckingMode": "basic",
+    "python.linting.enabled": false,
+    "python.formatting.provider": "black",
+    "python.analysis.stubPath": "./.venv/lib/python3.11/site-packages",
+    "pylance.insidersChannel": "off",
+    "ruff.args": [
+        "--config=../pyproject.toml"
+    ],
+    "[python]": {
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": "explicit"
+        }
+    }
+}
