@@ -1,6 +1,6 @@
 version: 2
 updates:
-  # Enable version updates for database-agent
+  # Enable version updates for database-agent (includes both main and dev dependencies)
   - package-ecosystem: "pip"
     directory: "/database-agent"
     schedule:
@@ -36,7 +36,7 @@ updates:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
 
-  # Enable version updates for github-agent
+  # Enable version updates for github-agent (includes both main and dev dependencies)
   - package-ecosystem: "pip"
     directory: "/github-agent"
     schedule:
@@ -151,51 +151,5 @@ updates:
       - "chilleregeravi"
     commit-message:
       prefix: "devcontainer"
-      include: "scope"
-    open-pull-requests-limit: 2
-
-  # Enable version updates for database-agent dev dependencies
-  - package-ecosystem: "pip"
-    directory: "/database-agent"
-    requirements-file: "requirements-dev.txt"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-      timezone: "Etc/UTC"
-    labels:
-      - "dependencies"
-      - "python"
-      - "database-agent"
-      - "dev-deps"
-    reviewers:
-      - "chilleregeravi"
-    assignees:
-      - "chilleregeravi"
-    commit-message:
-      prefix: "deps-dev"
-      include: "scope"
-    open-pull-requests-limit: 2
-
-  # Enable version updates for github-agent dev dependencies
-  - package-ecosystem: "pip"
-    directory: "/github-agent"
-    requirements-file: "requirements-dev.txt"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-      timezone: "Etc/UTC"
-    labels:
-      - "dependencies"
-      - "python"
-      - "github-agent"
-      - "dev-deps"
-    reviewers:
-      - "chilleregeravi"
-    assignees:
-      - "chilleregeravi"
-    commit-message:
-      prefix: "deps-dev"
       include: "scope"
     open-pull-requests-limit: 2
