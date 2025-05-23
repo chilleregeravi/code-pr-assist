@@ -117,11 +117,20 @@ Dependencies are managed in three levels:
 2. **Agent `pyproject.toml`**: Agent-specific dependencies
 3. **Root `requirements.txt`**: Pinned versions for production
 
+**Note**: Each agent also maintains `requirements.txt` and `requirements-dev.txt` files that are automatically generated from `pyproject.toml` for CodeQL security analysis and CI/CD compatibility.
+
 ### Adding Dependencies
 
 - **Shared dependencies**: Add to root `pyproject.toml`
 - **Agent-specific**: Add to agent's `pyproject.toml`
 - **Development tools**: Add to `[project.optional-dependencies.dev]`
+
+When adding dependencies, regenerate the requirements.txt files:
+```bash
+# After updating pyproject.toml, regenerate requirements files for CodeQL
+cd github-agent && pip freeze > requirements.txt
+cd ../database-agent && pip freeze > requirements.txt
+```
 
 ## 🔒 Security
 

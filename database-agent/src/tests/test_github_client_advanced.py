@@ -2,6 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from database_agent.exceptions import GitHubAPIError
 from database_agent.github_client import GitHubClient, PRProcessingError
 
 
@@ -53,7 +54,7 @@ def test_get_pr_data_error():
     with patch("database_agent.github_client.Github") as mock:
         client = GitHubClient(token="test-token")
         mock_instance = mock.return_value
-        mock_instance.get_repo.side_effect = Exception("fail")
+        mock_instance.get_repo.side_effect = GitHubAPIError("GitHub API error")
         with pytest.raises(PRProcessingError):
             client.get_pr_data("owner/repo", 1)
 
@@ -116,7 +117,9 @@ def test_process_repository_prs_calls_processor():
 def test_process_repository_prs_error():
     with patch("database_agent.github_client.Github"):
         client = GitHubClient(token="test-token")
-        client.get_pull_requests = MagicMock(side_effect=Exception("fail"))
+        client.get_pull_requests = MagicMock(
+            side_effect=GitHubAPIError("GitHub API error")
+        )
         processor = MagicMock()
         with pytest.raises(PRProcessingError):
             client.process_repository_prs("owner/repo", processor)

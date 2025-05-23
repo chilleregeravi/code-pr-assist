@@ -2,7 +2,12 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from database_agent.exceptions import DataValidationError, PRProcessingError
+from database_agent.exceptions import (
+    DataValidationError,
+    GitHubAPIError,
+    PRProcessingError,
+    VectorStoreError,
+)
 from database_agent.pr_processor import PRProcessor
 
 
@@ -106,7 +111,7 @@ def test_process_and_store_pr_validation_error(processor, valid_pr):
 def test_process_and_store_pr_store_error(processor, valid_pr):
     processor.validate_pr_data = MagicMock()
     processor.transform_pr_data = MagicMock(return_value=valid_pr)
-    processor.vector_store.store_pr.side_effect = Exception("fail")
+    processor.vector_store.store_pr.side_effect = VectorStoreError("Vector store error")
     with pytest.raises(PRProcessingError):
         processor.process_and_store_pr(valid_pr)
 
@@ -126,7 +131,7 @@ def test_process_pr_success(processor, valid_pr):
 
 
 def test_process_pr_error(processor, valid_pr):
-    processor.vector_store.store_pr.side_effect = Exception("fail")
+    processor.vector_store.store_pr.side_effect = VectorStoreError("Vector store error")
     with pytest.raises(PRProcessingError):
         processor.process_pr(valid_pr)
 
@@ -137,7 +142,9 @@ def test_process_prs_batch_success(processor, valid_pr):
 
 
 def test_process_prs_batch_error(processor, valid_pr):
-    processor.vector_store.store_prs_batch.side_effect = Exception("fail")
+    processor.vector_store.store_prs_batch.side_effect = VectorStoreError(
+        "Vector store error"
+    )
     with pytest.raises(PRProcessingError):
         processor.process_prs_batch([valid_pr])
 
@@ -156,7 +163,7 @@ def test_process_repository_prs_success(valid_pr):
 def test_process_repository_prs_error(valid_pr):
     store = MagicMock()
     github_client = MagicMock()
-    github_client.get_pull_requests.side_effect = Exception("fail")
+    github_client.get_pull_requests.side_effect = GitHubAPIError("GitHub API error")
     processor = PRProcessor(vector_store=store, github_client=github_client)
     with pytest.raises(PRProcessingError):
         processor.process_repository_prs("owner/repo")

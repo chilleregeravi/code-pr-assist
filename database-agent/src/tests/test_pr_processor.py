@@ -5,7 +5,11 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from database_agent.exceptions import PRProcessingError
+from database_agent.exceptions import (
+    GitHubAPIError,
+    PRProcessingError,
+    VectorStoreError,
+)
 from database_agent.pr_processor import PRProcessor
 
 
@@ -109,15 +113,22 @@ def test_process_pr_handles_error(pr_processor, mock_vector_store):
         pr_processor.process_pr({"id": 1, "title": "Test PR"})
 
 
-def test_process_prs_batch_handles_error(pr_processor, mock_vector_store):
-    """Test processing PRs batch handles error."""
-    mock_vector_store.store_prs_batch.side_effect = Exception("Storage Error")
+def test_process_prs_batch_handles_error():
+    mock_store = MagicMock()
+    mock_store.store_prs_batch.side_effect = VectorStoreError("Storage error")
+    pr_processor = PRProcessor(vector_store=mock_store)
     with pytest.raises(PRProcessingError):
         pr_processor.process_prs_batch([{"id": 1, "title": "Test PR"}])
 
 
-def test_process_repository_prs_handles_error(pr_processor, mock_github_client):
-    """Test processing repository PRs handles error."""
-    mock_github_client.get_pull_requests.side_effect = Exception("API Error")
+def test_process_repository_prs_handles_error():
+    mock_store = MagicMock()
+    mock_github_client = MagicMock()
+    mock_github_client.get_pull_requests.side_effect = GitHubAPIError(
+        "GitHub API error"
+    )
+    pr_processor = PRProcessor(
+        vector_store=mock_store, github_client=mock_github_client
+    )
     with pytest.raises(PRProcessingError):
         pr_processor.process_repository_prs("owner/repo")

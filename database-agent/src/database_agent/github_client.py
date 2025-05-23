@@ -36,7 +36,13 @@ except ImportError:
     tracer = NoOpTracer()  # type: ignore
     TRACING_AVAILABLE = False
 
-from .exceptions import PRProcessingError
+from .exceptions import (
+    DataValidationError,
+    GitHubAPIError,
+    PRProcessingError,
+    RateLimitError,
+    RetryError,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -50,12 +56,17 @@ def rate_limit(func):
             return func(self, *args, **kwargs)
         except GithubException as e:
             if e.status == 403 and "rate limit" in str(e).lower():
-                reset_time = int(e.headers.get("X-RateLimit-Reset", 0))
+                headers = getattr(e, "headers", {}) or {}
+                reset_time = int(headers.get("X-RateLimit-Reset", 0))
                 wait_time = max(reset_time - time.time(), 0)
                 if wait_time > 0:
                     time.sleep(wait_time)
                     return func(self, *args, **kwargs)
-            raise
+                else:
+                    raise RateLimitError(
+                        f"GitHub API rate limit exceeded: {e!s}"
+                    ) from e
+            raise GitHubAPIError(f"GitHub API error: {e!s}") from e
 
     return wrapper
 
@@ -70,10 +81,22 @@ def retry(max_retries: int = 3, delay: float = 1.0):
             for attempt in range(max_retries):
                 try:
                     return func(self, *args, **kwargs)
-                except Exception as e:
+                except (GithubException, GitHubAPIError, PRProcessingError) as e:
                     last_exception = e
                     if attempt < max_retries - 1:
                         time.sleep(delay * (2**attempt))  # Exponential backoff
+
+            # Ensure we always have an exception to raise
+            if last_exception is None:
+                last_exception = RetryError(
+                    "All retry attempts failed with unknown error"
+                )
+            elif isinstance(last_exception, GithubException):
+                msg = (
+                    f"GitHub API error after {max_retries} retries: {last_exception!s}"
+                )
+                last_exception = GitHubAPIError(msg)
+
             raise last_exception
 
         return wrapper
@@ -176,7 +199,7 @@ class GitHubClient:
 
                 return pr_data
 
-            except GithubException as e:
+            except (GithubException, GitHubAPIError, RateLimitError) as e:
                 raise PRProcessingError(f"Failed to fetch PR data: {e!s}") from e
 
     def get_repo_prs(
@@ -204,7 +227,7 @@ class GitHubClient:
                     yield pr_data
                     count += 1
 
-            except GithubException as e:
+            except (GithubException, GitHubAPIError, PRProcessingError) as e:
                 raise PRProcessingError(f"Failed to fetch repository PRs: {e!s}") from e
 
     def process_and_store_prs(
@@ -233,7 +256,7 @@ class GitHubClient:
                 if batch:
                     self._process_batch(pr_processor, batch)
 
-            except Exception as e:
+            except (PRProcessingError, GitHubAPIError) as e:
                 raise PRProcessingError(
                     f"Failed to process repository PRs: {e!s}"
                 ) from e
@@ -248,7 +271,7 @@ class GitHubClient:
         for pr_data in batch:
             try:
                 pr_processor.process_and_store_pr(pr_data)
-            except Exception as e:
+            except (PRProcessingError, DataValidationError) as e:
                 logger.error(f"Failed to process PR #{pr_data['id']}: {e!s}")
                 continue
 
@@ -291,7 +314,7 @@ class GitHubClient:
         try:
             return self.client.get_repo(repo_name)
         except GithubException as e:
-            raise PRProcessingError(f"Failed to fetch repository: {e!s}") from e
+            raise GitHubAPIError(f"Failed to fetch repository: {e!s}") from e
 
     def get_pull_requests(self, repo_name: str) -> list[PullRequest]:
         """Get all pull requests for a repository.
@@ -308,8 +331,8 @@ class GitHubClient:
         try:
             repo = self.get_repository(repo_name)
             return list(repo.get_pulls())
-        except GithubException as e:
-            raise PRProcessingError(f"Failed to fetch pull requests: {e!s}") from e
+        except (GitHubAPIError, GithubException) as e:
+            raise GitHubAPIError(f"Failed to fetch pull requests: {e!s}") from e
 
     def get_pull_request_comments(self, repo_name: str, pr_number: int) -> list[str]:
         """Get comments for a pull request.
@@ -409,7 +432,7 @@ class GitHubClient:
             for pr in self.get_pull_requests(repo_name):
                 pr_data = self._extract_pr_data(pr)
                 processor.process_pr(pr_data)
-        except Exception as e:
+        except (GitHubAPIError, PRProcessingError) as e:
             raise PRProcessingError(f"Failed to process repository PRs: {e!s}") from e
 
     def _extract_pr_data(self, pr: Any) -> dict:

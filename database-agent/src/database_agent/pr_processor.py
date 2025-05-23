@@ -28,7 +28,7 @@ except ImportError:
     tracer = NoOpTracer()  # type: ignore
     TRACING_AVAILABLE = False
 
-from .exceptions import DataValidationError, PRProcessingError
+from .exceptions import DataValidationError, PRProcessingError, VectorStoreError
 from .vector_store import VectorStore
 
 
@@ -138,7 +138,7 @@ class PRProcessor:
 
         Raises:
             DataValidationError: If PR data validation fails.
-            VectorStoreError: If storing in vector store fails.
+            PRProcessingError: If storing in vector store fails.
         """
         # Validate PR data
         self.validate_pr_data(pr_data)
@@ -147,7 +147,10 @@ class PRProcessor:
         processed_data = self.transform_pr_data(pr_data)
 
         # Store in vector store
-        self.vector_store.store_pr(processed_data)
+        try:
+            self.vector_store.store_pr(processed_data)
+        except Exception as e:
+            raise PRProcessingError(f"Failed to store PR in vector store: {e!s}") from e
 
     def process_and_store_prs_batch(self, prs_data: list[dict[str, Any]]) -> None:
         """Process and store multiple PRs in vector store.
@@ -172,7 +175,7 @@ class PRProcessor:
                 processed_data = self.transform_pr_data(pr_data)
                 processed_prs.append(processed_data)
 
-            except Exception as e:
+            except (DataValidationError, PRProcessingError) as e:
                 errors.append(f"PR #{pr_data.get('id', 'unknown')}: {e!s}")
                 continue
 
@@ -230,7 +233,7 @@ class PRProcessor:
                 self.validate_pr_data(pr_data)
                 transformed = self.transform_pr_data(pr_data)
                 return self.vector_store.store_pr(transformed)
-            except Exception as e:
+            except (DataValidationError, VectorStoreError) as e:
                 raise PRProcessingError(f"Failed to process PR: {e!s}") from e
 
     def process_prs_batch(self, prs_data: list[dict[str, Any]]) -> bool:
@@ -239,7 +242,7 @@ class PRProcessor:
             try:
                 processed = [self.transform_pr_data(pr) for pr in prs_data]
                 return self.vector_store.store_prs_batch(processed)
-            except Exception as e:
+            except (DataValidationError, VectorStoreError) as e:
                 raise PRProcessingError(f"Failed to process PRs batch: {e!s}") from e
 
     def process_repository_prs(self, repo_name: str) -> bool:
@@ -259,7 +262,7 @@ class PRProcessor:
                     for pr in prs
                 ]
                 return self.process_prs_batch(prs_data)
-            except Exception as e:
+            except (PRProcessingError, DataValidationError, VectorStoreError) as e:
                 raise PRProcessingError(
                     f"Failed to process repository PRs: {e!s}"
                 ) from e

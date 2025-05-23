@@ -67,22 +67,21 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install -r requirements-lint.txt
-          pip install -r requirements-test.txt
+          pip install -r requirements-dev.txt
           pip install -e .
       - name: Lint with ruff
         run: |
-          pip install -r requirements-lint.txt
+          pip install -r requirements-dev.txt
           ruff check .
       - name: Check formatting with black
         run: |
-          pip install -r requirements-lint.txt
+          pip install -r requirements-dev.txt
           black . --check
       - name: Test with pytest
         env:
           PYTHONPATH: src
         run: |
-          pip install -r requirements-test.txt
+          pip install -r requirements-dev.txt
           pytest --cov=./ --cov-report=xml
 
   database-agent-checks:
@@ -143,22 +142,21 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install -r requirements-lint.txt
-          pip install -r requirements-test.txt
+          pip install -r requirements-dev.txt
           pip install -e .
       - name: Lint with ruff
         run: |
-          pip install -r requirements-lint.txt
+          pip install -r requirements-dev.txt
           ruff check .
       - name: Check formatting with black
         run: |
-          pip install -r requirements-lint.txt
+          pip install -r requirements-dev.txt
           black . --check
       - name: Test with pytest
         env:
           PYTHONPATH: src
         run: |
-          pip install -r requirements-test.txt
+          pip install -r requirements-dev.txt
           pytest --cov=./ --cov-report=xml
 
   test-github-agent:

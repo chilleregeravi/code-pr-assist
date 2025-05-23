@@ -154,10 +154,10 @@ updates:
       include: "scope"
     open-pull-requests-limit: 2
 
-  # Enable version updates for database-agent test/dev dependencies
+  # Enable version updates for database-agent dev dependencies
   - package-ecosystem: "pip"
     directory: "/database-agent"
-    requirements-file: "requirements-test.txt"
+    requirements-file: "requirements-dev.txt"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -177,33 +177,10 @@ updates:
       include: "scope"
     open-pull-requests-limit: 2
 
-  # Enable version updates for database-agent lint dependencies
-  - package-ecosystem: "pip"
-    directory: "/database-agent"
-    requirements-file: "requirements-lint.txt"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-      timezone: "Etc/UTC"
-    labels:
-      - "dependencies"
-      - "python"
-      - "database-agent"
-      - "lint-deps"
-    reviewers:
-      - "chilleregeravi"
-    assignees:
-      - "chilleregeravi"
-    commit-message:
-      prefix: "deps-lint"
-      include: "scope"
-    open-pull-requests-limit: 2
-
-  # Enable version updates for github-agent test/dev dependencies
+  # Enable version updates for github-agent dev dependencies
   - package-ecosystem: "pip"
     directory: "/github-agent"
-    requirements-file: "requirements-test.txt"
+    requirements-file: "requirements-dev.txt"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -220,28 +197,5 @@ updates:
       - "chilleregeravi"
     commit-message:
       prefix: "deps-dev"
-      include: "scope"
-    open-pull-requests-limit: 2
-
-  # Enable version updates for github-agent lint dependencies
-  - package-ecosystem: "pip"
-    directory: "/github-agent"
-    requirements-file: "requirements-lint.txt"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-      timezone: "Etc/UTC"
-    labels:
-      - "dependencies"
-      - "python"
-      - "github-agent"
-      - "lint-deps"
-    reviewers:
-      - "chilleregeravi"
-    assignees:
-      - "chilleregeravi"
-    commit-message:
-      prefix: "deps-lint"
       include: "scope"
     open-pull-requests-limit: 2
