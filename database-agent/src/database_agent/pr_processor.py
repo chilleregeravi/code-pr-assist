@@ -4,8 +4,12 @@ import re
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
+from opentelemetry import trace
+
 from .exceptions import DataValidationError, PRProcessingError
 from .vector_store import VectorStore
+
+tracer = trace.get_tracer(__name__)
 
 
 class PRProcessor:
@@ -198,37 +202,40 @@ class PRProcessor:
         self.vector_store.delete_collection()
 
     def process_pr(self, pr_data: Dict[str, Any]) -> bool:
-        """Process a single PR and store it in the vector store."""
-        try:
-            self.validate_pr_data(pr_data)
-            transformed = self.transform_pr_data(pr_data)
-            return self.vector_store.store_pr(transformed)
-        except Exception as e:
-            raise PRProcessingError(f"Failed to process PR: {str(e)}")
+        with tracer.start_as_current_span("PRProcessor.process_pr") as span:
+            span.set_attribute("pr.id", pr_data.get("id"))
+            try:
+                self.validate_pr_data(pr_data)
+                transformed = self.transform_pr_data(pr_data)
+                return self.vector_store.store_pr(transformed)
+            except Exception as e:
+                raise PRProcessingError(f"Failed to process PR: {str(e)}")
 
     def process_prs_batch(self, prs_data: List[Dict[str, Any]]) -> bool:
-        """Process multiple PRs in batch and store them in the vector store."""
-        try:
-            processed = [self.transform_pr_data(pr) for pr in prs_data]
-            return self.vector_store.store_prs_batch(processed)
-        except Exception as e:
-            raise PRProcessingError(f"Failed to process PRs batch: {str(e)}")
+        with tracer.start_as_current_span("PRProcessor.process_prs_batch") as span:
+            span.set_attribute("prs.count", len(prs_data))
+            try:
+                processed = [self.transform_pr_data(pr) for pr in prs_data]
+                return self.vector_store.store_prs_batch(processed)
+            except Exception as e:
+                raise PRProcessingError(f"Failed to process PRs batch: {str(e)}")
 
     def process_repository_prs(self, repo_name: str) -> bool:
-        """Process all PRs from a repository and store them in the vector store."""
-        try:
-            if self.github_client is None:
-                raise PRProcessingError("GitHub client not initialized")
-            prs = self.github_client.get_pull_requests(repo_name)
-            prs_data = [
-                {
-                    "id": pr.number,
-                    "title": pr.title,
-                    "body": pr.body,
-                    "labels": [label.name for label in getattr(pr, "labels", [])],
-                }
-                for pr in prs
-            ]
-            return self.process_prs_batch(prs_data)
-        except Exception as e:
-            raise PRProcessingError(f"Failed to process repository PRs: {str(e)}")
+        with tracer.start_as_current_span("PRProcessor.process_repository_prs") as span:
+            span.set_attribute("repo_name", repo_name)
+            try:
+                if self.github_client is None:
+                    raise PRProcessingError("GitHub client not initialized")
+                prs = self.github_client.get_pull_requests(repo_name)
+                prs_data = [
+                    {
+                        "id": pr.number,
+                        "title": pr.title,
+                        "body": pr.body,
+                        "labels": [label.name for label in getattr(pr, "labels", [])],
+                    }
+                    for pr in prs
+                ]
+                return self.process_prs_batch(prs_data)
+            except Exception as e:
+                raise PRProcessingError(f"Failed to process repository PRs: {str(e)}")

@@ -1,0 +1,8 @@
+# Lint/dev dependencies for Database Agent
+black==25.1.0
+isort==6.0.1
+flake8==7.2.0
+mypy==1.15.0
+ruff==0.11.10
+pylint==3.3.7
+setuptools==80.7.1

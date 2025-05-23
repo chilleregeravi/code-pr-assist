@@ -3,7 +3,10 @@
 import logging
 from typing import Dict, List, Optional
 
+from opentelemetry import trace
+
 logger = logging.getLogger(__name__)
+tracer = trace.get_tracer(__name__)
 
 
 class DatabaseAgent:
@@ -34,9 +37,11 @@ class DatabaseAgent:
         Returns:
             Dictionary containing database analysis results
         """
-        logger.info(f"Analyzing database at {database_url}")
-        # TODO: Implement database analysis logic
-        return {"status": "not_implemented"}
+        with tracer.start_as_current_span("DatabaseAgent.analyze_database") as span:
+            span.set_attribute("database_url", database_url)
+            logger.info(f"Analyzing database at {database_url}")
+            # TODO: Implement database analysis logic
+            return {"status": "not_implemented"}
 
     def generate_migration(self, changes: List[Dict]) -> str:
         """Generate database migration script based on changes.
@@ -47,9 +52,11 @@ class DatabaseAgent:
         Returns:
             Migration script as a string
         """
-        logger.info(f"Generating migration for {len(changes)} changes")
-        # TODO: Implement migration generation logic
-        return "-- Migration script placeholder"
+        with tracer.start_as_current_span("DatabaseAgent.generate_migration") as span:
+            span.set_attribute("changes.count", len(changes))
+            logger.info(f"Generating migration for {len(changes)} changes")
+            # TODO: Implement migration generation logic
+            return "-- Migration script placeholder"
 
     def validate_changes(self, changes: List[Dict]) -> bool:
         """Validate proposed database changes.
@@ -60,6 +67,8 @@ class DatabaseAgent:
         Returns:
             True if changes are valid, False otherwise
         """
-        logger.info(f"Validating {len(changes)} changes")
-        # TODO: Implement validation logic
-        return True
+        with tracer.start_as_current_span("DatabaseAgent.validate_changes") as span:
+            span.set_attribute("changes.count", len(changes))
+            logger.info(f"Validating {len(changes)} changes")
+            # TODO: Implement validation logic
+            return True

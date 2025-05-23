@@ -10,10 +10,12 @@ from typing import Any, Dict, Generator, List, Optional
 from github import Github, GithubException
 from github.PullRequest import PullRequest
 from github.Repository import Repository
+from opentelemetry import trace
 
 from .exceptions import PRProcessingError
 
 logger = logging.getLogger(__name__)
+tracer = trace.get_tracer(__name__)
 
 
 def rate_limit(func):
@@ -88,79 +90,71 @@ class GitHubClient:
     @rate_limit
     @retry()
     def get_pr_data(self, repo_name: str, pr_number: int) -> Dict[str, Any]:
-        """Fetch PR data from GitHub.
+        with tracer.start_as_current_span("GitHubClient.get_pr_data") as span:
+            span.set_attribute("repo_name", repo_name)
+            span.set_attribute("pr_number", pr_number)
 
-        Args:
-            repo_name: Repository name in format 'owner/repo'.
-            pr_number: Pull request number.
+            try:
+                repo: Repository = self.client.get_repo(repo_name)
+                pr: PullRequest = repo.get_pull(pr_number)
 
-        Returns:
-            Dictionary containing PR information.
+                # Fetch comments
+                comments = [comment.body for comment in pr.get_issue_comments()]
 
-        Raises:
-            PRProcessingError: If fetching PR data fails.
-        """
-        try:
-            repo: Repository = self.client.get_repo(repo_name)
-            pr: PullRequest = repo.get_pull(pr_number)
+                # Fetch reviews
+                reviews = []
+                for review in pr.get_reviews():
+                    reviews.append(
+                        {
+                            "user": review.user.login,
+                            "state": review.state,
+                            "body": review.body,
+                            "submitted_at": review.submitted_at.isoformat(),
+                        }
+                    )
 
-            # Fetch comments
-            comments = [comment.body for comment in pr.get_issue_comments()]
+                # Fetch files changed
+                files_changed = []
+                for file in pr.get_files():
+                    files_changed.append(
+                        {
+                            "filename": file.filename,
+                            "status": file.status,
+                            "additions": file.additions,
+                            "deletions": file.deletions,
+                            "changes": file.changes,
+                        }
+                    )
 
-            # Fetch reviews
-            reviews = []
-            for review in pr.get_reviews():
-                reviews.append(
-                    {
-                        "user": review.user.login,
-                        "state": review.state,
-                        "body": review.body,
-                        "submitted_at": review.submitted_at.isoformat(),
-                    }
-                )
+                # Compile PR data
+                pr_data = {
+                    "id": pr.number,
+                    "repo_name": repo_name,  # Add repository name
+                    "title": pr.title,
+                    "body": pr.body,
+                    "state": pr.state,
+                    "created_at": pr.created_at.isoformat() if pr.created_at else "",
+                    "updated_at": pr.updated_at.isoformat() if pr.updated_at else "",
+                    "author": pr.user.login,
+                    "labels": [label.name for label in pr.labels],
+                    "comments": comments,
+                    "reviews": reviews,
+                    "files_changed": files_changed,
+                    "additions": pr.additions,
+                    "deletions": pr.deletions,
+                    "changed_files": pr.changed_files,
+                    "base_branch": pr.base.ref,
+                    "head_branch": pr.head.ref,
+                    "mergeable": pr.mergeable,
+                    "mergeable_state": pr.mergeable_state,
+                    "review_comments": pr.review_comments,
+                    "commits": pr.commits,
+                }
 
-            # Fetch files changed
-            files_changed = []
-            for file in pr.get_files():
-                files_changed.append(
-                    {
-                        "filename": file.filename,
-                        "status": file.status,
-                        "additions": file.additions,
-                        "deletions": file.deletions,
-                        "changes": file.changes,
-                    }
-                )
+                return pr_data
 
-            # Compile PR data
-            pr_data = {
-                "id": pr.number,
-                "repo_name": repo_name,  # Add repository name
-                "title": pr.title,
-                "body": pr.body,
-                "state": pr.state,
-                "created_at": pr.created_at.isoformat() if pr.created_at else "",
-                "updated_at": pr.updated_at.isoformat() if pr.updated_at else "",
-                "author": pr.user.login,
-                "labels": [label.name for label in pr.labels],
-                "comments": comments,
-                "reviews": reviews,
-                "files_changed": files_changed,
-                "additions": pr.additions,
-                "deletions": pr.deletions,
-                "changed_files": pr.changed_files,
-                "base_branch": pr.base.ref,
-                "head_branch": pr.head.ref,
-                "mergeable": pr.mergeable,
-                "mergeable_state": pr.mergeable_state,
-                "review_comments": pr.review_comments,
-                "commits": pr.commits,
-            }
-
-            return pr_data
-
-        except GithubException as e:
-            raise PRProcessingError(f"Failed to fetch PR data: {str(e)}")
+            except GithubException as e:
+                raise PRProcessingError(f"Failed to fetch PR data: {str(e)}")
 
     def get_repo_prs(
         self,
@@ -170,36 +164,25 @@ class GitHubClient:
         direction: str = "desc",
         limit: Optional[int] = None,
     ) -> Generator[Dict[str, Any], None, None]:
-        """Fetch multiple PRs from a repository.
+        with tracer.start_as_current_span("GitHubClient.get_repo_prs") as span:
+            span.set_attribute("repo_name", repo_name)
+            span.set_attribute("state", state)
 
-        Args:
-            repo_name: Repository name in format 'owner/repo'.
-            state: PR state ('open', 'closed', 'all').
-            sort: Sort field ('created', 'updated', 'popularity', 'long-running').
-            direction: Sort direction ('asc', 'desc').
-            limit: Maximum number of PRs to fetch.
+            try:
+                repo: Repository = self.client.get_repo(repo_name)
+                prs = repo.get_pulls(state=state, sort=sort, direction=direction)
 
-        Yields:
-            PR data dictionaries.
+                count = 0
+                for pr in prs:
+                    if limit and count >= limit:
+                        break
 
-        Raises:
-            PRProcessingError: If fetching PRs fails.
-        """
-        try:
-            repo: Repository = self.client.get_repo(repo_name)
-            prs = repo.get_pulls(state=state, sort=sort, direction=direction)
+                    pr_data = self.get_pr_data(repo_name, pr.number)
+                    yield pr_data
+                    count += 1
 
-            count = 0
-            for pr in prs:
-                if limit and count >= limit:
-                    break
-
-                pr_data = self.get_pr_data(repo_name, pr.number)
-                yield pr_data
-                count += 1
-
-        except GithubException as e:
-            raise PRProcessingError(f"Failed to fetch repository PRs: {str(e)}")
+            except GithubException as e:
+                raise PRProcessingError(f"Failed to fetch repository PRs: {str(e)}")
 
     def process_and_store_prs(
         self,
@@ -208,34 +191,27 @@ class GitHubClient:
         state: str = "all",
         limit: Optional[int] = None,
     ) -> None:
-        """Fetch PRs from a repository and store them in the vector database.
+        with tracer.start_as_current_span("GitHubClient.process_and_store_prs") as span:
+            span.set_attribute("repo_name", repo_name)
+            span.set_attribute("state", state)
 
-        Args:
-            pr_processor: PRProcessor instance for storing PR data.
-            repo_name: Repository name in format 'owner/repo'.
-            state: PR state to fetch ('open', 'closed', 'all').
-            limit: Maximum number of PRs to process.
+            try:
+                prs_generator = self.get_repo_prs(repo_name, state=state, limit=limit)
+                batch = []
 
-        Raises:
-            PRProcessingError: If processing or storing PRs fails.
-        """
-        try:
-            prs_generator = self.get_repo_prs(repo_name, state=state, limit=limit)
-            batch = []
+                for pr_data in prs_generator:
+                    batch.append(pr_data)
 
-            for pr_data in prs_generator:
-                batch.append(pr_data)
+                    if len(batch) >= self.batch_size:
+                        self._process_batch(pr_processor, batch)
+                        batch = []
 
-                if len(batch) >= self.batch_size:
+                # Process remaining PRs
+                if batch:
                     self._process_batch(pr_processor, batch)
-                    batch = []
 
-            # Process remaining PRs
-            if batch:
-                self._process_batch(pr_processor, batch)
-
-        except Exception as e:
-            raise PRProcessingError(f"Failed to process repository PRs: {str(e)}")
+            except Exception as e:
+                raise PRProcessingError(f"Failed to process repository PRs: {str(e)}")
 
     def _process_batch(self, pr_processor, batch: List[Dict[str, Any]]) -> None:
         """Process a batch of PRs.

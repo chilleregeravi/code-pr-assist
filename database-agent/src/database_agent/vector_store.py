@@ -4,6 +4,7 @@ import os
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 
+from opentelemetry import trace
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
 from sentence_transformers import SentenceTransformer
@@ -14,6 +15,8 @@ from .exceptions import (
     EmbeddingError,
     VectorStoreError,
 )
+
+tracer = trace.get_tracer(__name__)
 
 
 class VectorStore(ABC):
@@ -136,69 +139,67 @@ class QdrantStore(VectorStore):
         return self._generate_embedding(text)
 
     def store_pr(self, pr_data: Dict[str, Any]) -> bool:
-        if not self.client or not self.model:
-            raise ConnectionError("Qdrant store not initialized")
-        try:
-            text_to_embed = f"{pr_data['title']} {pr_data['body']}"
-            embedding = self._generate_embedding(text_to_embed)
-            point = models.PointStruct(
-                id=pr_data["id"], vector=embedding, payload=pr_data
-            )
-            self.client.upsert(collection_name=self.collection_name, points=[point])
-            return True
-        except Exception as e:
-            raise VectorStoreError(f"Failed to store PR data: {str(e)}")
+        with tracer.start_as_current_span("VectorStore.store_pr") as span:
+            span.set_attribute("pr.id", pr_data.get("id"))
+            if not self.client or not self.model:
+                raise ConnectionError("Qdrant store not initialized")
+            try:
+                text_to_embed = f"{pr_data['title']} {pr_data['body']}"
+                embedding = self._generate_embedding(text_to_embed)
+                point = models.PointStruct(
+                    id=pr_data["id"], vector=embedding, payload=pr_data
+                )
+                self.client.upsert(collection_name=self.collection_name, points=[point])
+                return True
+            except Exception as e:
+                raise VectorStoreError(f"Failed to store PR data: {str(e)}")
 
     def store_prs_batch(self, prs_data: List[Dict[str, Any]]) -> bool:
-        if not self.client or not self.model:
-            raise ConnectionError("Qdrant store not initialized")
-        try:
-            for i in range(0, len(prs_data), self.batch_size):
-                batch = prs_data[i : i + self.batch_size]
-                points = []
-                for pr_data in batch:
-                    text_to_embed = f"{pr_data['title']} {pr_data['body']}"
-                    embedding = self._generate_embedding(text_to_embed)
-                    point = models.PointStruct(
-                        id=pr_data["id"], vector=embedding, payload=pr_data
-                    )
-                    points.append(point)
-                self.client.upsert(collection_name=self.collection_name, points=points)
-            return True
-        except Exception as e:
-            raise VectorStoreError(f"Failed to store PRs batch: {str(e)}")
+        with tracer.start_as_current_span("VectorStore.store_prs_batch") as span:
+            span.set_attribute("prs.count", len(prs_data))
+            if not self.client or not self.model:
+                raise ConnectionError("Qdrant store not initialized")
+            try:
+                for i in range(0, len(prs_data), self.batch_size):
+                    batch = prs_data[i : i + self.batch_size]
+                    points = []
+                    for pr_data in batch:
+                        text_to_embed = f"{pr_data['title']} {pr_data['body']}"
+                        embedding = self._generate_embedding(text_to_embed)
+                        point = models.PointStruct(
+                            id=pr_data["id"], vector=embedding, payload=pr_data
+                        )
+                        points.append(point)
+                    self.client.upsert(collection_name=self.collection_name, points=points)
+                return True
+            except Exception as e:
+                raise VectorStoreError(f"Failed to store PRs batch: {str(e)}")
 
     def search_similar_prs(self, query: str, limit: int = 5) -> List[Dict[str, Any]]:
-        """Search for similar PRs in Qdrant.
+        with tracer.start_as_current_span("VectorStore.search_similar_prs") as span:
+            span.set_attribute("query", query)
+            span.set_attribute("limit", limit)
+            if not self.client or not self.model:
+                raise ConnectionError("Qdrant store not initialized")
 
-        Args:
-            query: Search query text.
-            limit: Maximum number of results to return.
+            try:
+                # Generate embedding for query
+                query_embedding = self._generate_embedding(query)
 
-        Returns:
-            List of similar PRs with their scores.
-        """
-        if not self.client or not self.model:
-            raise ConnectionError("Qdrant store not initialized")
+                # Search in Qdrant
+                search_result = self.client.search(
+                    collection_name=self.collection_name,
+                    query_vector=query_embedding,
+                    limit=limit,
+                )
 
-        try:
-            # Generate embedding for query
-            query_embedding = self._generate_embedding(query)
+                return [
+                    {"id": hit.id, "score": hit.score, "payload": hit.payload}
+                    for hit in search_result
+                ]
 
-            # Search in Qdrant
-            search_result = self.client.search(
-                collection_name=self.collection_name,
-                query_vector=query_embedding,
-                limit=limit,
-            )
-
-            return [
-                {"id": hit.id, "score": hit.score, "payload": hit.payload}
-                for hit in search_result
-            ]
-
-        except Exception as e:
-            raise VectorStoreError(f"Failed to search similar PRs: {str(e)}")
+            except Exception as e:
+                raise VectorStoreError(f"Failed to search similar PRs: {str(e)}")
 
     def get_pr(self, pr_id: int) -> Optional[Dict[str, Any]]:
         if not self.client:
