@@ -153,3 +153,95 @@ updates:
       prefix: "devcontainer"
       include: "scope"
     open-pull-requests-limit: 2
+
+  # Enable version updates for database-agent test/dev dependencies
+  - package-ecosystem: "pip"
+    directory: "/database-agent"
+    requirements-file: "requirements-test.txt"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Etc/UTC"
+    labels:
+      - "dependencies"
+      - "python"
+      - "database-agent"
+      - "dev-deps"
+    reviewers:
+      - "chilleregeravi"
+    assignees:
+      - "chilleregeravi"
+    commit-message:
+      prefix: "deps-dev"
+      include: "scope"
+    open-pull-requests-limit: 2
+
+  # Enable version updates for database-agent lint dependencies
+  - package-ecosystem: "pip"
+    directory: "/database-agent"
+    requirements-file: "requirements-lint.txt"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Etc/UTC"
+    labels:
+      - "dependencies"
+      - "python"
+      - "database-agent"
+      - "lint-deps"
+    reviewers:
+      - "chilleregeravi"
+    assignees:
+      - "chilleregeravi"
+    commit-message:
+      prefix: "deps-lint"
+      include: "scope"
+    open-pull-requests-limit: 2
+
+  # Enable version updates for github-agent test/dev dependencies
+  - package-ecosystem: "pip"
+    directory: "/github-agent"
+    requirements-file: "requirements-test.txt"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Etc/UTC"
+    labels:
+      - "dependencies"
+      - "python"
+      - "github-agent"
+      - "dev-deps"
+    reviewers:
+      - "chilleregeravi"
+    assignees:
+      - "chilleregeravi"
+    commit-message:
+      prefix: "deps-dev"
+      include: "scope"
+    open-pull-requests-limit: 2
+
+  # Enable version updates for github-agent lint dependencies
+  - package-ecosystem: "pip"
+    directory: "/github-agent"
+    requirements-file: "requirements-lint.txt"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Etc/UTC"
+    labels:
+      - "dependencies"
+      - "python"
+      - "github-agent"
+      - "lint-deps"
+    reviewers:
+      - "chilleregeravi"
+    assignees:
+      - "chilleregeravi"
+    commit-message:
+      prefix: "deps-lint"
+      include: "scope"
+    open-pull-requests-limit: 2

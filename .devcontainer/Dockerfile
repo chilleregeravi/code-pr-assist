@@ -14,8 +14,8 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies for both subprojects
-COPY database-agent/requirements.txt /tmp/database-agent-requirements.txt
-COPY github-agent/requirements.txt /tmp/github-agent-requirements.txt
+COPY ../database-agent/requirements.txt /tmp/database-agent-requirements.txt
+COPY ../github-agent/requirements.txt /tmp/github-agent-requirements.txt
 
 # Install Python packages
 RUN pip install --upgrade pip && \

@@ -9,11 +9,10 @@ venv:
 	$(VERSION_PYTHON) -m venv .venv
 	$(VENV_ACTIVATE)
 	.venv/bin/$(VERSION_PYTHON) -m pip install --upgrade pip
-	.venv/bin/$(VERSION_PYTHON) -m pip install pylint ruff pytest pytest-cov pytest-mock pylint pytest-asyncio mypy pre-commit
 	.venv/bin/$(VERSION_PYTHON) -m pip install -r requirements.txt
 
 setup: venv
-	$(VENV_ACTIVATE) && .venv/bin/pre-commit install
+	$(VENV_ACTIVATE) && .venv/bin/pip install pre-commit && .venv/bin/pre-commit install
 	@echo "✅ Development environment ready! Pre-commit hooks installed."
 	@echo "Now you can safely commit code - all checks will run automatically."
 
@@ -23,7 +22,8 @@ run:
 	DEBUG="yes" .venv/bin/$(VERSION_PYTHON) -m src.$(subst -,_,$(notdir $(shell pwd))).__init__ | tee log.txt
 
 lint: venv
-	$(VENV_DIR)/bin/black . && $(VENV_DIR)/bin/isort .
+	.venv/bin/pip install -r requirements-lint.txt
+	.venv/bin/black . && .venv/bin/isort .
 
 format: lint
 
@@ -31,21 +31,25 @@ clean:
 	find . -type d -name "__pycache__" -exec rm -r {} +
 	rm -rf $(VENV_DIR)
 
-test:
+test: venv
+	.venv/bin/pip install -r requirements-test.txt
 	$(VENV_ACTIVATE)
 	.venv/bin/pytest -c ../pytest.ini -vv --cov=src --cov-report=xml:coverage.xml
 
-lint-check-all:
+lint-check-all: venv
+	.venv/bin/pip install -r requirements-lint.txt
 	$(VENV_ACTIVATE)
 	.venv/bin/black --check src src/tests
 	.venv/bin/isort --check-only src src/tests
 	.venv/bin/flake8 src src/tests
 
-lint-diff:
+lint-diff: venv
+	.venv/bin/pip install -r requirements-lint.txt
 	$(VENV_ACTIVATE)
 	.venv/bin/black --check --diff src src/tests
 	.venv/bin/isort --check-only --diff src src/tests
 
-type-check:
+type-check: venv
+	.venv/bin/pip install -r requirements-lint.txt
 	$(VENV_ACTIVATE)
 	.venv/bin/mypy src
