@@ -1,0 +1,310 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Run GitHub Agent Tests",
+            "type": "shell",
+            "command": "make",
+            "args": [
+                "test"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/github-agent"
+            },
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Run Database Agent Tests",
+            "type": "shell",
+            "command": "make",
+            "args": [
+                "test"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/database-agent"
+            },
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Format GitHub Agent Code",
+            "type": "shell",
+            "command": "black",
+            "args": [
+                "src/"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/github-agent"
+            },
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "silent",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "Sort GitHub Agent Imports"
+            ]
+        },
+        {
+            "label": "Sort GitHub Agent Imports",
+            "type": "shell",
+            "command": "isort",
+            "args": [
+                "src/"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/github-agent"
+            },
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "silent",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            }
+        },
+        {
+            "label": "Format Database Agent Code",
+            "type": "shell",
+            "command": "black",
+            "args": [
+                "src/"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/database-agent"
+            },
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "silent",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "Sort Database Agent Imports"
+            ]
+        },
+        {
+            "label": "Sort Database Agent Imports",
+            "type": "shell",
+            "command": "isort",
+            "args": [
+                "src/"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/database-agent"
+            },
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "silent",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            }
+        },
+        {
+            "label": "Lint GitHub Agent",
+            "type": "shell",
+            "command": "flake8",
+            "args": [
+                "src/"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/github-agent"
+            },
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": {
+                "owner": "flake8",
+                "fileLocation": "relative",
+                "pattern": {
+                    "regexp": "^(.+):(\\d+):(\\d+): (\\w\\d+) (.+)$",
+                    "file": 1,
+                    "line": 2,
+                    "column": 3,
+                    "code": 4,
+                    "message": 5
+                }
+            }
+        },
+        {
+            "label": "Type Check GitHub Agent",
+            "type": "shell",
+            "command": "mypy",
+            "args": [
+                "src/"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/github-agent"
+            },
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": {
+                "owner": "mypy",
+                "fileLocation": "relative",
+                "pattern": {
+                    "regexp": "^(.+):(\\d+): (error|warning|note): (.+)$",
+                    "file": 1,
+                    "line": 2,
+                    "severity": 3,
+                    "message": 4
+                }
+            }
+        },
+        {
+            "label": "Lint Database Agent",
+            "type": "shell",
+            "command": "flake8",
+            "args": [
+                "src/"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/database-agent"
+            },
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": {
+                "owner": "flake8",
+                "fileLocation": "relative",
+                "pattern": {
+                    "regexp": "^(.+):(\\d+):(\\d+): (\\w\\d+) (.+)$",
+                    "file": 1,
+                    "line": 2,
+                    "column": 3,
+                    "code": 4,
+                    "message": 5
+                }
+            }
+        },
+        {
+            "label": "Type Check Database Agent",
+            "type": "shell",
+            "command": "mypy",
+            "args": [
+                "src/"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/database-agent"
+            },
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": {
+                "owner": "mypy",
+                "fileLocation": "relative",
+                "pattern": {
+                    "regexp": "^(.+):(\\d+): (error|warning|note): (.+)$",
+                    "file": 1,
+                    "line": 2,
+                    "severity": 3,
+                    "message": 4
+                }
+            }
+        },
+        {
+            "label": "Start GitHub Agent",
+            "type": "shell",
+            "command": "python",
+            "args": [
+                "-m",
+                "src.github_agent.main"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/github-agent"
+            },
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "dedicated",
+                "showReuseMessage": false,
+                "clear": true
+            },
+            "isBackground": true,
+            "problemMatcher": []
+        },
+        {
+            "label": "Start Database Agent",
+            "type": "shell",
+            "command": "python",
+            "args": [
+                "-m",
+                "src.database_agent.main"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/database-agent"
+            },
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "dedicated",
+                "showReuseMessage": false,
+                "clear": true
+            },
+            "isBackground": true,
+            "problemMatcher": []
+        }
+    ]
+}

@@ -1,0 +1,21 @@
+[run]
+source = src/github_agent
+branch = True
+data_file = .coverage
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    if self.debug:
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    pass
+    raise ImportError
+fail_under = 80
+
+[html]
+directory = coverage_html
+
+[xml]
+output = coverage.xml

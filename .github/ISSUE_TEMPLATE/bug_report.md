@@ -11,9 +11,9 @@ assignees: ''
 
 ## Steps to Reproduce
 <!-- Provide detailed steps to reproduce the bug -->
-1. 
-2. 
-3. 
+1.
+2.
+3.
 
 ## Expected Behavior
 <!-- What did you expect to happen? -->
@@ -41,4 +41,4 @@ assignees: ''
 <!-- If you have suggestions on how to fix the bug -->
 
 ## Impact
-<!-- How does this bug affect your work? --> 
+<!-- How does this bug affect your work? -->

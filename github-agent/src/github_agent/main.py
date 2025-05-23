@@ -1,30 +1,63 @@
 # main.py
 import logging
+from typing import Any, Dict, Optional
 
 import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from github_agent.github_utils import post_comment_to_pr
-from github_agent.llm_utils import gpt_summarize_with_context
+from github_agent.agents.embedding_agent import EmbeddingAgent
+from github_agent.agents.github_agent import GitHubAgent
+from github_agent.agents.llm_agent import LLMAgent
+from github_agent.config import SERVER_HOST, SERVER_PORT
 from github_agent.models import PullRequestData
-from github_agent.qdrant_utils import embed_text, search_similar_prs, upsert_pr
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
+llm_agent = LLMAgent()
+embedding_agent = EmbeddingAgent()
+github_agent = GitHubAgent()
+
+
+@app.get("/")
+async def root() -> Dict[str, str]:
+    """Root endpoint."""
+    return {"message": "GitHub PR Agent - OpenAI-powered PR analysis"}
+
+
+@app.get("/health")
+async def health() -> Dict[str, str]:
+    """Health check endpoint."""
+    return {"status": "healthy"}
+
 
 @app.post("/webhook")
-async def handle_pr_webhook(request: Request):
+async def handle_pr_webhook(request: Request) -> JSONResponse:
     """Handle GitHub PR webhook events."""
-    try:
-        data = await request.json()
-        if "pull_request" not in data:
-            logger.info("Webhook received without pull_request data.")
-            return JSONResponse(content={"status": "ignored"}, status_code=200)
+    # Check for required header
+    event_type: Optional[str] = request.headers.get("X-GitHub-Event")
+    if not event_type:
+        return JSONResponse(
+            content={"detail": "Missing X-GitHub-Event header"}, status_code=400
+        )
 
-        pr_info = data["pull_request"]
+    # Validate event type
+    if event_type != "pull_request":
+        return JSONResponse(
+            content={"detail": f"Unsupported event type: {event_type}"}, status_code=400
+        )
+
+    try:
+        data: Dict[str, Any] = await request.json()
+        if "pull_request" not in data or "action" not in data:
+            logger.info("Webhook received without required data.")
+            return JSONResponse(
+                content={"detail": "Missing required fields"}, status_code=422
+            )
+
+        pr_info: Dict[str, Any] = data["pull_request"]
         required_fields = ["title", "body", "number", "diff_url"]
         if not all(field in pr_info for field in required_fields):
             logger.error("Missing required PR fields in webhook payload.")
@@ -41,30 +74,59 @@ async def handle_pr_webhook(request: Request):
         )
 
         full_text = f"Title: {pr.title}\n\n{pr.body}"
-        embedding = embed_text(full_text)
-        similar = search_similar_prs(embedding)
-        similar_bodies = [x["text"] for x in similar if "text" in x]
-        summary = gpt_summarize_with_context(full_text, similar_bodies)
+        embedding = embedding_agent.embed(full_text)
+        similar = embedding_agent.search_similar(embedding)
+        similar_bodies = [
+            x["text"]
+            for x in similar
+            if x is not None and isinstance(x, dict) and "text" in x
+        ]
+        summary = llm_agent.summarize_with_context(full_text, similar_bodies)
 
-        try:
-            post_comment_to_pr(pr.number, summary)
-        except Exception:
-            logger.warning(f"Could not post comment to PR #{pr.number}.")
+        comment_posted = False
+        embedding_stored = False
 
+        # Try to post the comment
         try:
-            upsert_pr(pr.number, embedding, full_text)
+            github_agent.post_comment(pr.number, summary)
+            comment_posted = True
+        except Exception as e:
+            logger.warning(f"Could not post comment to PR #{pr.number}: {e}")
+
+        # Try to store the embedding
+        try:
+            embedding_agent.upsert(pr.number, embedding, full_text)
+            embedding_stored = True
         except Exception as e:
             logger.error(f"Failed to upsert PR to Qdrant: {e}")
 
+        # Determine status based on operations
+        status = (
+            "processed"
+            if comment_posted and embedding_stored
+            else "partially_processed"
+        )
+
+        # Convert the numpy array to a list to make it JSON serializable
+        embedding_list = embedding.tolist() if embedding is not None else None
+
         return JSONResponse(
-            content={"status": "processed", "summary": summary}, status_code=200
+            content={
+                "status": status,
+                "summary": str(summary),
+                "comment_posted": bool(comment_posted),
+                "embedding_stored": bool(embedding_stored),
+                "embedding": embedding_list,
+            },
+            status_code=200,
         )
     except Exception as e:
         logger.error(f"Webhook processing failed: {e}")
+        logger.exception("Webhook processing failed")
         return JSONResponse(
-            content={"status": "error", "message": str(e)}, status_code=500
+            content={"status": "error", "detail": str(e)}, status_code=500
         )
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host=SERVER_HOST, port=SERVER_PORT)

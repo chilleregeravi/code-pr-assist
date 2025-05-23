@@ -5,49 +5,151 @@ updates:
     directory: "/database-agent"
     schedule:
       interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Etc/UTC"
     labels:
       - "dependencies"
       - "python"
       - "database-agent"
     reviewers:
       - "chilleregeravi"
-    versioning-strategy: "auto"
-    open-pull-requests-limit: 10
+    assignees:
+      - "chilleregeravi"
+    versioning-strategy: "increase"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+      include: "scope"
+    pull-request-branch-name:
+      separator: "/"
     groups:
-      dependencies:
+      python-dependencies:
         patterns:
           - "*"
-    commit-message:
-      prefix: "pip"
-      include: "scope"
-    allow:
-      - dependency-type: "all"
-    security-updates-only: false
-    pull-request-branch-name:
-      separator: "-"
+        update-types:
+          - "minor"
+          - "patch"
+    # Separate group for major updates
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
 
   # Enable version updates for github-agent
   - package-ecosystem: "pip"
     directory: "/github-agent"
     schedule:
       interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Etc/UTC"
     labels:
       - "dependencies"
       - "python"
       - "github-agent"
     reviewers:
       - "chilleregeravi"
-    versioning-strategy: "auto"
-    open-pull-requests-limit: 10
+    assignees:
+      - "chilleregeravi"
+    versioning-strategy: "increase"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+      include: "scope"
+    pull-request-branch-name:
+      separator: "/"
     groups:
-      dependencies:
+      python-dependencies:
         patterns:
           - "*"
+        update-types:
+          - "minor"
+          - "patch"
+    # Separate group for major updates
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # Enable version updates for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Etc/UTC"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    reviewers:
+      - "chilleregeravi"
+    assignees:
+      - "chilleregeravi"
     commit-message:
-      prefix: "pip"
+      prefix: "ci"
       include: "scope"
-    allow:
-      - dependency-type: "all"
-    security-updates-only: false
-    pull-request-branch-name:
-      separator: "-" 
+    open-pull-requests-limit: 3
+
+  # Enable version updates for Docker
+  - package-ecosystem: "docker"
+    directory: "/github-agent"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Etc/UTC"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "github-agent"
+    reviewers:
+      - "chilleregeravi"
+    assignees:
+      - "chilleregeravi"
+    commit-message:
+      prefix: "docker"
+      include: "scope"
+    open-pull-requests-limit: 2
+
+  - package-ecosystem: "docker"
+    directory: "/database-agent"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Etc/UTC"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "database-agent"
+    reviewers:
+      - "chilleregeravi"
+    assignees:
+      - "chilleregeravi"
+    commit-message:
+      prefix: "docker"
+      include: "scope"
+    open-pull-requests-limit: 2
+
+  # Enable version updates for DevContainer
+  - package-ecosystem: "docker"
+    directory: "/.devcontainer"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Etc/UTC"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "devcontainer"
+    reviewers:
+      - "chilleregeravi"
+    assignees:
+      - "chilleregeravi"
+    commit-message:
+      prefix: "devcontainer"
+      include: "scope"
+    open-pull-requests-limit: 2

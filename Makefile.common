@@ -1,6 +1,6 @@
 # Makefile for CAG PR Agent with venv and auto-install
-.PHONY: venv run lint format clean test lint-check-all lint-diff type-check
-VERSION_PYTHON=python3.11
+.PHONY: venv setup run lint format clean test lint-check-all lint-diff type-check
+VERSION_PYTHON=python3
 VENV_ACTIVATE = . .venv/bin/activate
 
 .PHONY: venv run lint format clean test
@@ -9,10 +9,15 @@ venv:
 	$(VERSION_PYTHON) -m venv .venv
 	$(VENV_ACTIVATE)
 	.venv/bin/$(VERSION_PYTHON) -m pip install --upgrade pip
-	.venv/bin/$(VERSION_PYTHON) -m pip install pylint ruff pytest pytest-cov pytest-mock pylint pytest-asyncio mypy
+	.venv/bin/$(VERSION_PYTHON) -m pip install pylint ruff pytest pytest-cov pytest-mock pylint pytest-asyncio mypy pre-commit
 	.venv/bin/$(VERSION_PYTHON) -m pip install -r requirements.txt
 
-run: 
+setup: venv
+	$(VENV_ACTIVATE) && .venv/bin/pre-commit install
+	@echo "✅ Development environment ready! Pre-commit hooks installed."
+	@echo "Now you can safely commit code - all checks will run automatically."
+
+run:
 	$(VENV_ACTIVATE)
 	echo "" > log.txt
 	DEBUG="yes" .venv/bin/$(VERSION_PYTHON) -m src.$(subst -,_,$(notdir $(shell pwd))).__init__ | tee log.txt

@@ -172,3 +172,13 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# Security scanning reports
+security-reports/
+bandit-*.json
+bandit-*.txt
+safety-*.json
+safety-*.txt
+semgrep-*.json
+semgrep-*.sarif
+*-results.sarif

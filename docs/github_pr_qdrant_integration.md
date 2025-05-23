@@ -77,7 +77,7 @@ qdrant_client.create_collection(
 def fetch_pr_data(repo_name, pr_number):
     repo = g.get_repo(repo_name)
     pr = repo.get_pull(pr_number)
-    
+
     pr_data = {
         "id": pr.number,
         "title": pr.title,
@@ -89,7 +89,7 @@ def fetch_pr_data(repo_name, pr_number):
         "labels": [label.name for label in pr.labels],
         "comments": [comment.body for comment in pr.get_issue_comments()]
     }
-    
+
     return pr_data
 ```
 
@@ -105,14 +105,14 @@ def process_and_upload_pr(pr_data):
     # Generate embedding for PR title and body
     text_to_embed = f"{pr_data['title']} {pr_data['body']}"
     embedding = model.encode(text_to_embed)
-    
+
     # Prepare point for Qdrant
     point = models.PointStruct(
         id=pr_data['id'],
         vector=embedding.tolist(),
         payload=pr_data
     )
-    
+
     # Upload to Qdrant
     qdrant_client.upsert(
         collection_name="github_prs",
@@ -140,14 +140,14 @@ process_and_upload_pr(pr_data)
 def search_similar_prs(query_text, limit=5):
     # Generate embedding for query
     query_embedding = model.encode(query_text)
-    
+
     # Search in Qdrant
     search_result = qdrant_client.search(
         collection_name="github_prs",
         query_vector=query_embedding.tolist(),
         limit=limit
     )
-    
+
     return search_result
 ```
 
@@ -182,4 +182,4 @@ Common issues and solutions:
 2. Use environment variables for sensitive data
 3. Implement proper access controls
 4. Regular token rotation
-5. Monitor API usage patterns 
+5. Monitor API usage patterns
