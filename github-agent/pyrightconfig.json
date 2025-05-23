@@ -5,8 +5,7 @@
     "exclude": [
         ".venv",
         "**/__pycache__",
-        ".pytest_cache",
-        ".mypy_cache"
+        ".pytest_cache"
     ],
     "venvPath": ".",
     "venv": ".venv",

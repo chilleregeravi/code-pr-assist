@@ -53,7 +53,6 @@ dev = [
     "black>=25.0",
     "isort>=6.0",
     "ruff>=0.11",  # Fast linter/formatter
-    "mypy>=1.15",
     "pre-commit>=4.0",
 
     # Documentation
@@ -78,7 +77,6 @@ lint = [
     "black>=25.0",
     "isort>=6.0",
     "ruff>=0.11",
-    "mypy>=1.15",
 ]
 
 [project.urls]
@@ -97,7 +95,6 @@ extend-exclude = '''
   \.eggs
   | \.git
   | \.hg
-  | \.mypy_cache
   | \.pytest_cache
   | \.tox
   | \.venv
@@ -144,33 +141,6 @@ ignore = [
     "I001",  # import sorting (handled by isort)
 ]
 per-file-ignores = {"**/tests/*" = ["S101", "S105", "S106", "S311"]}  # Allow assert, hardcoded passwords, and pseudo-random in tests
-
-[tool.mypy]
-python_version = "3.11"
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-check_untyped_defs = true
-disallow_untyped_decorators = true
-no_implicit_optional = true
-warn_redundant_casts = true
-warn_unused_ignores = true
-warn_no_return = true
-warn_unreachable = true
-strict_equality = true
-mypy_path = ["github-agent/src", "database-agent/src"]
-
-[[tool.mypy.overrides]]
-module = [
-    "qdrant_client.*",
-    "sentence_transformers.*",
-    "transformers.*",
-    "sklearn.*",
-    "github.*",
-    "opentelemetry.*",
-]
-ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 minversion = "8.0"

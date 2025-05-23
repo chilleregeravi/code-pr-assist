@@ -10,8 +10,7 @@
                 "python.terminal.activateEnvironment": false,
                 "black-formatter.args": ["--line-length=88"],
                 "isort.args": ["--profile", "black", "--line-length", "88"],
-                "flake8.args": ["--config=${workspaceFolder}/.flake8"],
-                "mypy-type-checker.args": ["--config-file=${workspaceFolder}/mypy.ini"],
+                "ruff.args": ["--config=${workspaceFolder}/pyproject.toml"],
                 "python.testing.pytestEnabled": true,
                 "python.testing.unittestEnabled": false,
                 "python.testing.pytestArgs": ["-v", "--tb=short"],
@@ -43,8 +42,7 @@
                 "ms-python.pylance",
                 "ms-python.black-formatter",
                 "ms-python.isort",
-                "ms-python.flake8",
-                "ms-python.mypy-type-checker",
+                "charliermarsh.ruff",
                 "ms-toolsai.jupyter",
                 "ms-vscode.vscode-json",
                 "redhat.vscode-yaml",
@@ -53,7 +51,7 @@
             ]
         }
     },
-    "postCreateCommand": "pip install -r database-agent/requirements.txt -r github-agent/requirements.txt && pip install pytest flake8 mypy black isort pre-commit && pre-commit install && python -c \"import json; s=json.load(open('.vscode/settings.json')); t=json.load(open('.vscode/settings.template.json')); s.update(t); json.dump(s, open('.vscode/settings.json', 'w'), indent=4)\"",
+    "postCreateCommand": "pip install -r database-agent/requirements.txt -r github-agent/requirements.txt && pip install pytest ruff black isort pre-commit && pre-commit install && python -c \"import json; s=json.load(open('.vscode/settings.json')); t=json.load(open('.vscode/settings.template.json')); s.update(t); json.dump(s, open('.vscode/settings.json', 'w'), indent=4)\"",
     "containerEnv": {
         "PYTHONPATH": "/workspaces/code-pr-assist",
         "PYTHONUNBUFFERED": "1",

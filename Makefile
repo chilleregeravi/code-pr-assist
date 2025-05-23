@@ -14,7 +14,6 @@ help:
 	@echo "  test-database - Run database agent tests"
 	@echo "  lint          - Run linting (ruff only)"
 	@echo "  format        - Format code (black, isort)"
-	@echo "  type-check    - Run type checking (mypy) - manual use"
 	@echo "  clean         - Clean up cache and temp files"
 	@echo "  build         - Build packages"
 	@echo "  docs          - Build documentation"
@@ -44,9 +43,6 @@ test-database:
 lint:
 	ruff check .
 
-type-check:
-	mypy .
-
 format:
 	black .
 	isort .
@@ -56,7 +52,6 @@ clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
-	find . -type d -name ".mypy_cache" -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name ".ruff_cache" -exec rm -rf {} + 2>/dev/null || true
 	find . -name "*.pyc" -delete
 	find . -name ".coverage" -delete

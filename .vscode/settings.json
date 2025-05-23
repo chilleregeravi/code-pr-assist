@@ -42,15 +42,13 @@
         "coverage.xml": true,
         "**/.venv": true,
         "**/venv": true,
-        "**/.ruff_cache": true,
-        "**/.mypy_cache": true
+        "**/.ruff_cache": true
     },
     "files.watcherExclude": {
         "**/__pycache__/**": true,
         "**/.pytest_cache/**": true,
         "**/.venv/**": true,
-        "**/.ruff_cache/**": true,
-        "**/.mypy_cache/**": true
+        "**/.ruff_cache/**": true
     },
     "python.envFile": "${workspaceFolder}/.env",
     "terminal.integrated.env.linux": {

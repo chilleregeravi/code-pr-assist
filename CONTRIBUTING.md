@@ -48,7 +48,7 @@ We provide multiple development environment options:
 
 ### DevContainer (Recommended)
 - **Complete Python 3.11 environment** with all tools pre-configured
-- **VS Code extensions** for Python, Black, isort, flake8, mypy
+- **VS Code extensions** for Python, Black, isort, Ruff
 - **Automatic dependency installation** and environment setup
 - **Pre-commit hooks** installed automatically
 - **Port forwarding** for all services (8000, 8001, 6333)
@@ -75,7 +75,6 @@ When you commit code, these checks run automatically:
 **Note**: Our pre-commit pipeline is optimized to avoid tool conflicts:
 - **No duplicate formatting**: Only Black handles code formatting
 - **No import conflicts**: Only isort handles import sorting
-- **No mypy in pre-commit**: Available for manual use to reduce setup friction
 - **Fast execution**: Ruff replaces multiple slower tools
 
 ### Verification
@@ -153,22 +152,7 @@ isort --check-only --diff src/
 - **isort**: Import sorting and organization (black-compatible)
 - **Ruff**: Fast linting (replaces flake8, pylint, pycodestyle, etc.)
 - **Bandit**: Security vulnerability scanning
-- **mypy**: Static type checking (manual use - not in pre-commit)
 - **pytest**: Testing framework with coverage reporting
-
-### Manual Type Checking
-While mypy is not included in pre-commit hooks (to reduce setup complexity),
-you can run it manually for type checking:
-
-```bash
-# Run type checking manually
-cd github-agent
-source .venv/bin/activate
-mypy src/github_agent/
-
-# Or use the Makefile command
-make type-check
-```
 
 ## 📝 Development Workflow
 
@@ -208,7 +192,6 @@ make setup         # Setup environment + install pre-commit hooks
 make test          # Run tests with coverage
 make format        # Format code with Black and isort
 make lint          # Check code style with ruff
-make type-check    # Run mypy type checking (manual)
 make clean         # Clean up cache files
 make run           # Start the service
 ```

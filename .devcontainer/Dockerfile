@@ -24,17 +24,17 @@ RUN pip install --upgrade pip && \
 
 # Install additional dev tools and linters
 RUN pip install \
-    pytest \
-    pytest-cov \
-    pytest-asyncio \
-    pytest-mock \
-    mypy \
-    flake8 \
+    bandit \
+    safety \
     black \
     isort \
+    ruff \
     pre-commit \
-    ipython \
-    jupyter
+    pytest \
+    pytest-asyncio \
+    pytest-cov \
+    pytest-mock \
+    httpx
 
 # Set up Python path and environment
 ENV PYTHONPATH=/workspaces/code-pr-assist

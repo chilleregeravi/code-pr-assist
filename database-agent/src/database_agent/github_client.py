@@ -413,5 +413,5 @@ class GitHubClient:
             raise PRProcessingError(f"Failed to process repository PRs: {e!s}") from e
 
     def _extract_pr_data(self, pr: Any) -> dict:
-        # Stub implementation to satisfy mypy; replace with real logic as needed
+        # Stub implementation to satisfy type checking; replace with real logic as needed
         return {}

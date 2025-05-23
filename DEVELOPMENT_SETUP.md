@@ -31,7 +31,7 @@ The project includes multiple `.vscode` folders for different development contex
 - **Contains**: Agent-specific Python paths, local virtual environment settings
 - **Interpreter**: `./.venv/bin/python` (agent-specific virtual environment)
 
-**All configurations are updated to use our streamlined tooling** (Black, isort, Ruff, no flake8/mypy linting).
+**All configurations are updated to use our streamlined tooling** (Black, isort, Ruff).
 
 ### Pre-commit Hooks (Automatic)
 
@@ -49,7 +49,6 @@ The following tools run automatically on every commit:
 
 | Tool | Purpose | When to Use |
 |------|---------|-------------|
-| **MyPy** | Type checking | Before PRs, complex refactoring |
 | **pytest** | Testing | Development, CI/CD |
 
 ## 🔧 Tool Responsibilities
@@ -61,12 +60,9 @@ We've carefully chosen tools that work together without conflicts:
 - **Single formatter**: Only Black handles code formatting (no ruff-format)
 - **Single import sorter**: Only isort handles imports (ruff import rules disabled)
 - **Fast linting**: Ruff replaces multiple slower tools (flake8, pylint, pycodestyle)
-- **Optional type checking**: MyPy available manually (not in pre-commit for setup simplicity)
 
 ### Removed from Pre-commit
 
-- **MyPy**: Too strict for current codebase, causes setup friction
-- **ruff-format**: Conflicts with Black formatting
 - **Test running**: Tests run in CI, not needed for every commit
 
 ## 📋 Development Commands
@@ -75,7 +71,6 @@ We've carefully chosen tools that work together without conflicts:
 # Code quality (automatic on commit)
 make format     # Black + isort formatting
 make lint       # Ruff linting only
-make type-check # MyPy type checking (manual)
 
 # Testing
 make test            # Run all tests
@@ -98,7 +93,6 @@ make all           # format + lint + test + security
 - **Security**: Bandit (excluding tests, configured skips)
 
 ### Manual (Before PRs)
-- **Type checking**: MyPy (strict mode configured)
 - **Test coverage**: 80% minimum (pytest-cov)
 - **Documentation**: Docstrings for public APIs
 
@@ -160,23 +154,10 @@ pre-commit install
 - Only isort handles imports
 - Ruff only does linting (no formatting/import rules)
 
-**MyPy errors?**
-```bash
-# MyPy is optional - run manually when needed
-make type-check
-
-# Or skip for now - it's not required for commits
-```
-
-**Ruff vs Black conflicts?**
-- Shouldn't happen - we ignore E501 (line length) in ruff
-- Black handles all formatting, ruff only does linting
-
 ### Performance
 
 - **Pre-commit runs in ~5-10 seconds** (vs previous 30+ seconds)
 - **Ruff is 10-100x faster** than flake8/pylint
-- **No mypy delays** during commits
 
 ## 🔄 Migration from Previous Setup
 
@@ -196,8 +177,6 @@ make all
 
 ### Changes Made
 
-- ✅ **Removed**: mypy from pre-commit (too strict)
-- ✅ **Removed**: ruff-format (conflicts with Black)
 - ✅ **Added**: Clearer tool responsibilities
 - ✅ **Added**: Faster execution times
 - ✅ **Added**: Better error messages

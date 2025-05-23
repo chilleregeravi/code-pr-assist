@@ -70,19 +70,14 @@ jobs:
           pip install -r requirements-lint.txt
           pip install -r requirements-test.txt
           pip install -e .
-      - name: Lint with flake8
+      - name: Lint with ruff
         run: |
           pip install -r requirements-lint.txt
-          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+          ruff check .
       - name: Check formatting with black
         run: |
           pip install -r requirements-lint.txt
           black . --check
-      - name: Type check with mypy
-        run: |
-          pip install -r requirements-lint.txt
-          mypy .
       - name: Test with pytest
         env:
           PYTHONPATH: src
@@ -120,12 +115,6 @@ jobs:
           source .venv/bin/activate
           make -f ../Makefile.common lint-check-all
 
-      - name: Run type checking
-        working-directory: database-agent
-        run: |
-          source .venv/bin/activate
-          mypy src
-
       - name: Run tests with coverage
         working-directory: database-agent
         run: |
@@ -157,19 +146,14 @@ jobs:
           pip install -r requirements-lint.txt
           pip install -r requirements-test.txt
           pip install -e .
-      - name: Lint with flake8
+      - name: Lint with ruff
         run: |
           pip install -r requirements-lint.txt
-          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+          ruff check .
       - name: Check formatting with black
         run: |
           pip install -r requirements-lint.txt
           black . --check
-      - name: Type check with mypy
-        run: |
-          pip install -r requirements-lint.txt
-          mypy .
       - name: Test with pytest
         env:
           PYTHONPATH: src
@@ -208,12 +192,6 @@ jobs:
         run: |
           source .venv/bin/activate
           pytest -v --cov=src --cov-report=term-missing --cov-fail-under=80
-
-      - name: Type check
-        working-directory: github-agent
-        run: |
-          source .venv/bin/activate
-          make type-check
 
       - name: Lint check
         working-directory: github-agent

@@ -88,7 +88,6 @@ All tool configurations are centralized in `pyproject.toml`:
 - **Linting**: ruff (fast, comprehensive linting)
 - **Formatting**: black + isort (code formatting and import sorting)
 - **Security**: bandit (security vulnerability scanning)
-- **Type checking**: mypy (manual only - not in pre-commit)
 - **Pre-commit**: Automated code quality checks
 
 **Note**: We've streamlined our pre-commit pipeline to avoid tool conflicts. Each tool has a specific role:
@@ -96,8 +95,6 @@ All tool configurations are centralized in `pyproject.toml`:
 - **isort**: Import sorting (black-compatible profile)
 - **Ruff**: Fast linting (replaces flake8, pylint, etc.)
 - **Bandit**: Security scanning
-
-MyPy is available for manual type checking but removed from pre-commit to reduce setup friction.
 
 ## 🧪 Testing
 
@@ -172,7 +169,6 @@ pip install -e .
 - **Coverage**: Minimum 80% test coverage
 - **Formatting**: Black + isort (automatic)
 - **Linting**: Ruff (fast, includes many flake8 rules)
-- **Type checking**: MyPy (manual use recommended)
 - **Security**: Bandit for security issues
 
 ## 📚 Architecture
