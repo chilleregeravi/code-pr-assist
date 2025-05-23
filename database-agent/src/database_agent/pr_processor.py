@@ -2,16 +2,40 @@
 
 import re
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, ClassVar
 
-from .exceptions import DataValidationError, PRProcessingError
+try:
+    from opentelemetry import trace
+
+    tracer = trace.get_tracer(__name__)
+    TRACING_AVAILABLE = True
+except ImportError:
+    # Create a no-op tracer for when OpenTelemetry is not available
+    class NoOpSpan:
+        def set_attribute(self, key: str, value: Any) -> None:
+            pass
+
+        def __enter__(self) -> "NoOpSpan":
+            return self
+
+        def __exit__(self, *args: Any) -> None:
+            pass
+
+    class NoOpTracer:
+        def start_as_current_span(self, name: str) -> NoOpSpan:
+            return NoOpSpan()
+
+    tracer = NoOpTracer()  # type: ignore
+    TRACING_AVAILABLE = False
+
+from .exceptions import DataValidationError, PRProcessingError, VectorStoreError
 from .vector_store import VectorStore
 
 
 class PRProcessor:
     """Process and validate PR data before storing in vector database."""
 
-    REQUIRED_FIELDS = {
+    REQUIRED_FIELDS: ClassVar[dict[str, type]] = {
         "id": int,
         "title": str,
         "body": str,
@@ -22,9 +46,9 @@ class PRProcessor:
         "repo_name": str,
     }
 
-    VALID_STATES = {"open", "closed", "merged"}
+    VALID_STATES: ClassVar[set[str]] = {"open", "closed", "merged"}
 
-    def __init__(self, vector_store: VectorStore, github_client: Optional[Any] = None):
+    def __init__(self, vector_store: VectorStore, github_client: Any | None = None):
         """Initialize PR processor.
 
         Args:
@@ -34,7 +58,7 @@ class PRProcessor:
         self.vector_store = vector_store
         self.github_client = github_client
 
-    def validate_pr_data(self, pr_data: Dict[str, Any]) -> None:
+    def validate_pr_data(self, pr_data: dict[str, Any]) -> None:
         """Validate PR data structure and types.
 
         Args:
@@ -64,7 +88,7 @@ class PRProcessor:
                 )
 
         except ValueError as e:
-            raise DataValidationError(f"Invalid date format: {str(e)}")
+            raise DataValidationError(f"Invalid date format: {e!s}") from e
 
         # Validate state
         if pr_data["state"] not in self.VALID_STATES:
@@ -80,7 +104,7 @@ class PRProcessor:
         if pr_data["id"] <= 0:
             raise DataValidationError(f"Invalid PR ID: {pr_data['id']}")
 
-    def transform_pr_data(self, pr_data: Dict[str, Any]) -> Dict[str, Any]:
+    def transform_pr_data(self, pr_data: dict[str, Any]) -> dict[str, Any]:
         """Transform PR data for storage.
 
         Args:
@@ -106,7 +130,7 @@ class PRProcessor:
 
         return transformed_data
 
-    def process_and_store_pr(self, pr_data: Dict[str, Any]) -> None:
+    def process_and_store_pr(self, pr_data: dict[str, Any]) -> None:
         """Process and store PR data in vector store.
 
         Args:
@@ -114,7 +138,7 @@ class PRProcessor:
 
         Raises:
             DataValidationError: If PR data validation fails.
-            VectorStoreError: If storing in vector store fails.
+            PRProcessingError: If storing in vector store fails.
         """
         # Validate PR data
         self.validate_pr_data(pr_data)
@@ -123,9 +147,12 @@ class PRProcessor:
         processed_data = self.transform_pr_data(pr_data)
 
         # Store in vector store
-        self.vector_store.store_pr(processed_data)
+        try:
+            self.vector_store.store_pr(processed_data)
+        except Exception as e:
+            raise PRProcessingError(f"Failed to store PR in vector store: {e!s}") from e
 
-    def process_and_store_prs_batch(self, prs_data: List[Dict[str, Any]]) -> None:
+    def process_and_store_prs_batch(self, prs_data: list[dict[str, Any]]) -> None:
         """Process and store multiple PRs in vector store.
 
         Args:
@@ -148,8 +175,8 @@ class PRProcessor:
                 processed_data = self.transform_pr_data(pr_data)
                 processed_prs.append(processed_data)
 
-            except Exception as e:
-                errors.append(f"PR #{pr_data.get('id', 'unknown')}: {str(e)}")
+            except (DataValidationError, PRProcessingError) as e:
+                errors.append(f"PR #{pr_data.get('id', 'unknown')}: {e!s}")
                 continue
 
         # Store processed PRs in batch
@@ -162,7 +189,7 @@ class PRProcessor:
                 "Failed to process some PRs:\n" + "\n".join(errors)
             )
 
-    def search_similar_prs(self, query: str, limit: int = 5) -> List[Dict[str, Any]]:
+    def search_similar_prs(self, query: str, limit: int = 5) -> list[dict[str, Any]]:
         """Search for similar PRs.
 
         Args:
@@ -174,7 +201,7 @@ class PRProcessor:
         """
         return self.vector_store.search_similar_prs(query, limit)
 
-    def get_pr(self, pr_id: int) -> Optional[Dict[str, Any]]:
+    def get_pr(self, pr_id: int) -> dict[str, Any] | None:
         """Retrieve a specific PR by ID.
 
         Args:
@@ -197,38 +224,45 @@ class PRProcessor:
         """Delete the entire collection."""
         self.vector_store.delete_collection()
 
-    def process_pr(self, pr_data: Dict[str, Any]) -> bool:
-        """Process a single PR and store it in the vector store."""
-        try:
-            self.validate_pr_data(pr_data)
-            transformed = self.transform_pr_data(pr_data)
-            return self.vector_store.store_pr(transformed)
-        except Exception as e:
-            raise PRProcessingError(f"Failed to process PR: {str(e)}")
+    def process_pr(self, pr_data: dict[str, Any]) -> bool:
+        with tracer.start_as_current_span("PRProcessor.process_pr") as span:
+            pr_id = pr_data.get("id")
+            if pr_id is not None:
+                span.set_attribute("pr.id", pr_id)
+            try:
+                self.validate_pr_data(pr_data)
+                transformed = self.transform_pr_data(pr_data)
+                return self.vector_store.store_pr(transformed)
+            except (DataValidationError, VectorStoreError) as e:
+                raise PRProcessingError(f"Failed to process PR: {e!s}") from e
 
-    def process_prs_batch(self, prs_data: List[Dict[str, Any]]) -> bool:
-        """Process multiple PRs in batch and store them in the vector store."""
-        try:
-            processed = [self.transform_pr_data(pr) for pr in prs_data]
-            return self.vector_store.store_prs_batch(processed)
-        except Exception as e:
-            raise PRProcessingError(f"Failed to process PRs batch: {str(e)}")
+    def process_prs_batch(self, prs_data: list[dict[str, Any]]) -> bool:
+        with tracer.start_as_current_span("PRProcessor.process_prs_batch") as span:
+            span.set_attribute("prs.count", len(prs_data))
+            try:
+                processed = [self.transform_pr_data(pr) for pr in prs_data]
+                return self.vector_store.store_prs_batch(processed)
+            except (DataValidationError, VectorStoreError) as e:
+                raise PRProcessingError(f"Failed to process PRs batch: {e!s}") from e
 
     def process_repository_prs(self, repo_name: str) -> bool:
-        """Process all PRs from a repository and store them in the vector store."""
-        try:
-            if self.github_client is None:
-                raise PRProcessingError("GitHub client not initialized")
-            prs = self.github_client.get_pull_requests(repo_name)
-            prs_data = [
-                {
-                    "id": pr.number,
-                    "title": pr.title,
-                    "body": pr.body,
-                    "labels": [label.name for label in getattr(pr, "labels", [])],
-                }
-                for pr in prs
-            ]
-            return self.process_prs_batch(prs_data)
-        except Exception as e:
-            raise PRProcessingError(f"Failed to process repository PRs: {str(e)}")
+        with tracer.start_as_current_span("PRProcessor.process_repository_prs") as span:
+            span.set_attribute("repo_name", repo_name)
+            try:
+                if self.github_client is None:
+                    raise PRProcessingError("GitHub client not initialized")
+                prs = self.github_client.get_pull_requests(repo_name)
+                prs_data = [
+                    {
+                        "id": pr.number,
+                        "title": pr.title,
+                        "body": pr.body,
+                        "labels": [label.name for label in getattr(pr, "labels", [])],
+                    }
+                    for pr in prs
+                ]
+                return self.process_prs_batch(prs_data)
+            except (PRProcessingError, DataValidationError, VectorStoreError) as e:
+                raise PRProcessingError(
+                    f"Failed to process repository PRs: {e!s}"
+                ) from e

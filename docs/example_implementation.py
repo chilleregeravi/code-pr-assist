@@ -1,7 +1,7 @@
 import logging
 import os
 import time
-from typing import List, Dict, Any
+from typing import Any
 
 from dotenv import load_dotenv
 from github import Github
@@ -51,7 +51,7 @@ class GitHubPRToQdrant:
                 collection_name="github_prs", vectors_config=collection_config
             )
 
-    def fetch_pr_data(self, repo_name: str, pr_number: int) -> Dict[str, Any]:
+    def fetch_pr_data(self, repo_name: str, pr_number: int) -> dict[str, Any]:
         """Fetch PR data from GitHub."""
         try:
             repo = self.github_client.get_repo(repo_name)
@@ -74,10 +74,10 @@ class GitHubPRToQdrant:
 
             return pr_data
         except Exception as e:
-            logger.error(f"Error fetching PR data: {str(e)}")
+            logger.error(f"Error fetching PR data: {e!s}")
             raise
 
-    def process_and_upload_pr(self, pr_data: Dict[str, Any]):
+    def process_and_upload_pr(self, pr_data: dict[str, Any]):
         """Process PR data and upload to Qdrant."""
         try:
             # Generate embedding
@@ -94,12 +94,12 @@ class GitHubPRToQdrant:
 
             logger.info(f"Successfully uploaded PR #{pr_data['id']} to Qdrant")
         except Exception as e:
-            logger.error(f"Error processing and uploading PR: {str(e)}")
+            logger.error(f"Error processing and uploading PR: {e!s}")
             raise
 
     def search_similar_prs(
         self, query_text: str, limit: int = 5
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Search for similar PRs in Qdrant."""
         try:
             # Generate embedding for query
@@ -117,7 +117,7 @@ class GitHubPRToQdrant:
                 for hit in search_result
             ]
         except Exception as e:
-            logger.error(f"Error searching similar PRs: {str(e)}")
+            logger.error(f"Error searching similar PRs: {e!s}")
             raise
 
 
@@ -147,7 +147,7 @@ def main():
             logger.info(f"Title: {pr['payload']['title']}\n")
 
     except Exception as e:
-        logger.error(f"Error in main execution: {str(e)}")
+        logger.error(f"Error in main execution: {e!s}")
 
 
 if __name__ == "__main__":

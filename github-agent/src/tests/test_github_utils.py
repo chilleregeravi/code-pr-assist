@@ -2,6 +2,7 @@ import os
 from unittest.mock import MagicMock, patch
 
 import pytest
+
 from github_agent.github_utils import get_repo, post_comment_to_pr
 
 os.environ["REPO_NAME"] = "dummy/repo"
@@ -28,14 +29,14 @@ def test_post_comment_to_pr_success():
 
 def test_post_comment_to_pr_error():
     with patch("github_agent.github_utils.get_repo", return_value=mock_repo):
-        mock_repo.get_pull.side_effect = Exception("fail")
-        with pytest.raises(Exception):
+        mock_repo.get_pull.side_effect = RuntimeError("fail")
+        with pytest.raises(RuntimeError):
             post_comment_to_pr(1, "test comment")
 
 
 def test_get_repo_error():
-    with patch("github_agent.github_utils.Github") as MockGithub:
-        mock_github = MockGithub.return_value
-        mock_github.get_repo.side_effect = Exception("fail")
-        with pytest.raises(Exception):
+    with patch("github_agent.github_utils.Github") as mock_github_class:
+        mock_github = mock_github_class.return_value
+        mock_github.get_repo.side_effect = ValueError("fail")
+        with pytest.raises(ValueError):
             get_repo()

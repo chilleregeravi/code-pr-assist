@@ -1,7 +1,6 @@
 import logging
 import os
 import sys
-from typing import Optional
 
 from dotenv import load_dotenv
 
@@ -23,7 +22,7 @@ def get_required_env_var(name: str) -> str:
 
 
 def get_env_var_with_validation(
-    name: str, default: Optional[str] = None, validate_https: bool = False
+    name: str, default: str | None = None, validate_https: bool = False
 ) -> str:
     """Get environment variable with optional validation."""
     value = os.getenv(name, default)
@@ -64,7 +63,7 @@ OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama2")
 if LLM_PROVIDER not in ["openai", "ollama"]:
     if not ("pytest" in sys.modules or os.getenv("TESTING")):
         logger.error(
-            f"Invalid LLM_PROVIDER '{LLM_PROVIDER}'. " "Must be 'openai' or 'ollama'"
+            f"Invalid LLM_PROVIDER '{LLM_PROVIDER}'. Must be 'openai' or 'ollama'"
         )
         sys.exit(1)
 

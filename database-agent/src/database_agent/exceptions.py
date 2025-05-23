@@ -23,3 +23,15 @@ class EmbeddingError(PRProcessingError):
 
 class DataValidationError(PRProcessingError):
     """Raised when PR data validation fails."""
+
+
+class GitHubAPIError(PRProcessingError):
+    """Raised when there is an error with GitHub API operations."""
+
+
+class RateLimitError(GitHubAPIError):
+    """Raised when GitHub API rate limits are exceeded."""
+
+
+class RetryError(PRProcessingError):
+    """Raised when retries are exhausted."""

@@ -1,6 +1,7 @@
 from unittest.mock import patch
 
 import pytest
+
 from github_agent.agents.github_agent import GitHubAgent
 
 
@@ -16,8 +17,8 @@ def test_post_comment_error():
     """Test error handling in comment posting."""
     with patch(
         "github_agent.agents.github_agent.post_comment_to_pr",
-        side_effect=Exception("Failed to post"),
+        side_effect=RuntimeError("Failed to post"),
     ):
         agent = GitHubAgent()
-        with pytest.raises(Exception):
+        with pytest.raises(RuntimeError):
             agent.post_comment(123, "Test comment")
