@@ -37,22 +37,12 @@ jobs:
           echo "is_security=$IS_SECURITY" >> $GITHUB_OUTPUT
           echo "should_auto_merge=$([[ $IS_PATCH == 'true' || $IS_MINOR == 'true' || $IS_SECURITY == 'true' ]] && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
 
-      - name: Wait for CI checks
-        if: steps.flags.outputs.should_auto_merge == 'true'
-        uses: lewagon/wait-on-check-action@v1.4.0
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          wait-interval: 15
-          running-workflow-name: 'Auto-merge Dependabot PRs'
-          allowed-conclusions: success
-          verbose: true
-
-      - name: Auto-merge safe updates
+      - name: Enable auto-merge for safe updates
         if: steps.flags.outputs.should_auto_merge == 'true'
         run: |
           UPDATE_TYPE="${{ steps.flags.outputs.is_security == 'true' && 'security' || 'version' }}"
-          echo "Auto-merging $UPDATE_TYPE update for ${{ steps.metadata.outputs.dependency-names }} from ${{ steps.metadata.outputs.previous-version }} to ${{ steps.metadata.outputs.new-version }}"
+          echo "Enabling auto-merge for $UPDATE_TYPE update: ${{ steps.metadata.outputs.dependency-names }} from ${{ steps.metadata.outputs.previous-version }} to ${{ steps.metadata.outputs.new-version }}"
+          # GitHub's auto-merge will wait for all required status checks before merging
           gh pr merge --auto --squash "${{ github.event.pull_request.html_url }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
