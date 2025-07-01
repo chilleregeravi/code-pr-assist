@@ -11,28 +11,35 @@ permissions:
   statuses: read
 
 jobs:
-  dependabot:
+  auto-merge:
     runs-on: ubuntu-latest
-    # Only run on Dependabot PRs
-    if: ${{ github.actor == 'dependabot[bot]' }}
+    if: github.actor == 'dependabot[bot]'
     steps:
-      - name: Dependabot metadata
+      - name: Get Dependabot metadata
         id: metadata
         uses: dependabot/fetch-metadata@v2.2.0
         with:
-          github-token: "${{ secrets.GITHUB_TOKEN }}"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Auto-approve patch and minor updates
-        if: ${{ steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor' }}
-        run: gh pr review --approve "$PR_URL"
-        env:
-          PR_URL: ${{ github.event.pull_request.html_url }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set update flags
+        id: flags
+        run: |
+          # Determine update types
+          IS_PATCH="${{ steps.metadata.outputs.update-type == 'version-update:semver-patch' }}"
+          IS_MINOR="${{ steps.metadata.outputs.update-type == 'version-update:semver-minor' }}"
+          IS_MAJOR="${{ steps.metadata.outputs.update-type == 'version-update:semver-major' }}"
+          IS_SECURITY="${{ contains(steps.metadata.outputs.dependency-names, 'security') || steps.metadata.outputs.alert-state == 'OPEN' }}"
 
-      - name: Wait for all CI checks to complete
-        if: ${{ steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor' }}
+          # Set flags for easy reuse
+          echo "is_patch=$IS_PATCH" >> $GITHUB_OUTPUT
+          echo "is_minor=$IS_MINOR" >> $GITHUB_OUTPUT
+          echo "is_major=$IS_MAJOR" >> $GITHUB_OUTPUT
+          echo "is_security=$IS_SECURITY" >> $GITHUB_OUTPUT
+          echo "should_auto_merge=$([[ $IS_PATCH == 'true' || $IS_MINOR == 'true' || $IS_SECURITY == 'true' ]] && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
+
+      - name: Wait for CI checks
+        if: steps.flags.outputs.should_auto_merge == 'true'
         uses: lewagon/wait-on-check-action@v1.3.4
-        id: wait-for-checks
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
@@ -41,71 +48,21 @@ jobs:
           allowed-conclusions: success
           verbose: true
 
-      - name: Auto-merge patch and minor updates
-        if: ${{ steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor' }}
+      - name: Auto-merge safe updates
+        if: steps.flags.outputs.should_auto_merge == 'true'
         run: |
-          echo "Auto-merging ${{ steps.metadata.outputs.dependency-names }} from ${{ steps.metadata.outputs.previous-version }} to ${{ steps.metadata.outputs.new-version }}"
-          gh pr merge --auto --squash "$PR_URL"
+          UPDATE_TYPE="${{ steps.flags.outputs.is_security == 'true' && 'security' || 'version' }}"
+          echo "Auto-merging $UPDATE_TYPE update for ${{ steps.metadata.outputs.dependency-names }} from ${{ steps.metadata.outputs.previous-version }} to ${{ steps.metadata.outputs.new-version }}"
+          gh pr merge --auto --squash "${{ github.event.pull_request.html_url }}"
         env:
-          PR_URL: ${{ github.event.pull_request.html_url }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  security-updates:
-    runs-on: ubuntu-latest
-    # Only run on Dependabot security PRs
-    if: ${{ github.actor == 'dependabot[bot]' }}
-    steps:
-      - name: Dependabot metadata
-        id: metadata
-        uses: dependabot/fetch-metadata@v2.2.0
-        with:
-          github-token: "${{ secrets.GITHUB_TOKEN }}"
-
-      - name: Auto-approve security updates
-        if: ${{ contains(steps.metadata.outputs.dependency-names, 'security') || steps.metadata.outputs.alert-state == 'OPEN' }}
-        run: gh pr review --approve "$PR_URL"
-        env:
-          PR_URL: ${{ github.event.pull_request.html_url }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Wait for all CI checks to complete (security)
-        if: ${{ contains(steps.metadata.outputs.dependency-names, 'security') || steps.metadata.outputs.alert-state == 'OPEN' }}
-        uses: lewagon/wait-on-check-action@v1.3.4
-        id: wait-for-checks-security
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          wait-interval: 15
-          running-workflow-name: 'Auto-merge Dependabot PRs'
-          allowed-conclusions: success
-          verbose: true
-
-      - name: Auto-merge security updates
-        if: ${{ contains(steps.metadata.outputs.dependency-names, 'security') || steps.metadata.outputs.alert-state == 'OPEN' }}
-        run: |
-          echo "Auto-merging security update for ${{ steps.metadata.outputs.dependency-names }}"
-          gh pr merge --auto --squash "$PR_URL"
-        env:
-          PR_URL: ${{ github.event.pull_request.html_url }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  notification:
-    runs-on: ubuntu-latest
-    needs: [dependabot, security-updates]
-    if: ${{ always() && github.actor == 'dependabot[bot]' }}
-    steps:
-      - name: Dependabot metadata
-        id: metadata
-        uses: dependabot/fetch-metadata@v2.2.0
-        with:
-          github-token: "${{ secrets.GITHUB_TOKEN }}"
 
       - name: Comment on major updates
-        if: ${{ steps.metadata.outputs.update-type == 'version-update:semver-major' }}
+        if: steps.flags.outputs.is_major == 'true'
         run: |
-          gh pr comment "$PR_URL" --body "🚨 **Major Version Update Detected** 🚨
+          gh pr comment "${{ github.event.pull_request.html_url }}" --body "🚨 **Major Version Update Detected** 🚨
 
-          This PR contains a **major version update** for ${{ steps.metadata.outputs.dependency-names }} from `${{ steps.metadata.outputs.previous-version }}` to `${{ steps.metadata.outputs.new-version }}`.
+          This PR contains a **major version update** for ${{ steps.metadata.outputs.dependency-names }} from \`${{ steps.metadata.outputs.previous-version }}\` to \`${{ steps.metadata.outputs.new-version }}\`.
 
           **⚠️ Manual review required** - major updates may contain breaking changes.
 
@@ -117,18 +74,29 @@ jobs:
 
           This PR will **NOT** be auto-merged and requires manual approval."
         env:
-          PR_URL: ${{ github.event.pull_request.html_url }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Add labels based on update type
+      - name: Add labels
         run: |
-          if [[ "${{ steps.metadata.outputs.update-type }}" == "version-update:semver-patch" ]]; then
-            gh pr edit "$PR_URL" --add-label "auto-merge" --add-label "patch-update"
-          elif [[ "${{ steps.metadata.outputs.update-type }}" == "version-update:semver-minor" ]]; then
-            gh pr edit "$PR_URL" --add-label "auto-merge" --add-label "minor-update"
-          elif [[ "${{ steps.metadata.outputs.update-type }}" == "version-update:semver-major" ]]; then
-            gh pr edit "$PR_URL" --add-label "manual-review" --add-label "major-update"
+          LABELS=""
+
+          # Add update type labels
+          if [[ "${{ steps.flags.outputs.is_patch }}" == "true" ]]; then
+            LABELS="auto-merge,patch-update"
+          elif [[ "${{ steps.flags.outputs.is_minor }}" == "true" ]]; then
+            LABELS="auto-merge,minor-update"
+          elif [[ "${{ steps.flags.outputs.is_major }}" == "true" ]]; then
+            LABELS="manual-review,major-update"
+          fi
+
+          # Add security label if applicable
+          if [[ "${{ steps.flags.outputs.is_security }}" == "true" ]]; then
+            LABELS="${LABELS:+$LABELS,}security-update"
+          fi
+
+          # Apply labels
+          if [[ -n "$LABELS" ]]; then
+            gh pr edit "${{ github.event.pull_request.html_url }}" --add-label "$LABELS"
           fi
         env:
-          PR_URL: ${{ github.event.pull_request.html_url }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
