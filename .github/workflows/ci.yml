@@ -14,7 +14,6 @@ on:
 
 permissions:
   contents: read
-  actions: read
 
 jobs:
   setup-database-agent:
@@ -51,7 +50,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      actions: write  # Required for cache save operations
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -77,7 +75,7 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: read
-      actions: read  # Required for cache restore operations
+      actions: read  # Required for pip cache restore
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -112,7 +110,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      actions: read  # Required for checkout and basic operations
+      actions: read  # Required for pip cache restore
     defaults:
       run:
         working-directory: ./github-agent
@@ -144,7 +142,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      actions: read  # Required for checkout operations
+      actions: read  # Required for pip cache restore
     services:
       qdrant:
         image: qdrant/qdrant:latest
@@ -185,7 +183,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
-      contents: read  # Required for checkout operations
+      contents: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -203,7 +201,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
-      contents: read  # Required for checkout operations
+      contents: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
