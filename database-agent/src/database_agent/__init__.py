@@ -14,12 +14,12 @@ from .pr_processor import PRProcessor
 from .vector_store import VectorStore
 
 __all__ = [
-    "DatabaseAgent",
     "DataValidationError",
+    "DatabaseAgent",
     "EmbeddingError",
-    "PRProcessingError",
-    "VectorStoreError",
-    "VectorStore",
-    "PRProcessor",
     "GitHubClient",
+    "PRProcessingError",
+    "PRProcessor",
+    "VectorStore",
+    "VectorStoreError",
 ]

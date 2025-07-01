@@ -3,6 +3,7 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
+
 from database_agent.database_agent import DatabaseAgent
 
 

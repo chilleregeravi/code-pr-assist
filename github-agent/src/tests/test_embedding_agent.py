@@ -1,9 +1,18 @@
-from typing import Generator
+from collections.abc import Generator
 from unittest.mock import MagicMock, Mock, patch
 
 import numpy as np
 import pytest
+from openai import OpenAIError
+
 from github_agent.agents.embedding_agent import EmbeddingAgent
+from github_agent.exceptions import (
+    ConnectionError,
+    EmbeddingError,
+    RateLimitError,
+    TimeoutError,
+    VectorStoreError,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -67,7 +76,7 @@ def test_embed_text_error(mock_openai: Mock) -> None:
     mock_openai.embeddings.create.side_effect = Exception("API Error")
 
     agent = EmbeddingAgent()
-    with pytest.raises(Exception):
+    with pytest.raises(EmbeddingError):
         agent.embed("test text")
 
 
@@ -88,8 +97,8 @@ def test_search_similar_error(mock_qdrant: Mock) -> None:
     """Test search error handling."""
     mock_qdrant.search.side_effect = Exception("Search failed")
     agent = EmbeddingAgent()
-    result = agent.search_similar(np.array([0.1] * 1536))
-    assert result == []
+    with pytest.raises(VectorStoreError):
+        agent.search_similar(np.array([0.1] * 1536))
 
 
 def test_upsert_success(mock_qdrant: Mock) -> None:
@@ -109,7 +118,7 @@ def test_upsert_error(mock_qdrant: Mock) -> None:
     mock_qdrant.upsert.side_effect = Exception("Upsert failed")
     agent = EmbeddingAgent()
     embedding = np.array([0.1] * 1536)
-    with pytest.raises(Exception):
+    with pytest.raises(VectorStoreError):
         agent.upsert(123, embedding, "Test PR")
 
 
@@ -119,7 +128,7 @@ def test_init_qdrant_error() -> None:
         "github_agent.agents.embedding_agent.QdrantClient",
         side_effect=Exception("Connection failed"),
     ):
-        with pytest.raises(Exception):
+        with pytest.raises(ConnectionError):
             EmbeddingAgent()
 
 
@@ -127,7 +136,29 @@ def test_init_openai_error() -> None:
     """Test OpenAI client initialization error."""
     with patch(
         "github_agent.agents.embedding_agent.OpenAI",
-        side_effect=Exception("API key invalid"),
+        side_effect=OpenAIError("API key invalid"),
     ):
-        with pytest.raises(Exception):
+        with pytest.raises(ConnectionError):
             EmbeddingAgent()
+
+
+def test_rate_limit_error(mock_openai: Mock) -> None:
+    """Test rate limit error handling."""
+    from openai import RateLimitError as OpenAIRateLimitError
+
+    mock_openai.embeddings.create.side_effect = OpenAIRateLimitError(
+        "Rate limit exceeded", response=MagicMock(), body={}
+    )
+    agent = EmbeddingAgent()
+    with pytest.raises(RateLimitError):
+        agent.embed("test text")
+
+
+def test_timeout_error(mock_openai: Mock) -> None:
+    """Test timeout error handling."""
+    from openai import APITimeoutError
+
+    mock_openai.embeddings.create.side_effect = APITimeoutError(request=MagicMock())
+    agent = EmbeddingAgent()
+    with pytest.raises(TimeoutError):
+        agent.embed("test text")

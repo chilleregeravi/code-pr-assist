@@ -1,6 +1,7 @@
 """Tests for the Database Agent."""
 
 import pytest
+
 from database_agent.database_agent import DatabaseAgent
 
 

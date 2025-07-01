@@ -6,13 +6,11 @@ on:
     paths:
       - 'database-agent/**'
       - 'github-agent/**'
-      - '.github/workflows/**'
   pull_request:
     branches: [ main ]
     paths:
       - 'database-agent/**'
       - 'github-agent/**'
-      - '.github/workflows/**'
 
 permissions:
   contents: read
@@ -33,18 +31,21 @@ jobs:
         with:
           python-version: '3.11'
           cache: 'pip'
-          cache-dependency-path: 'database-agent/requirements.txt'
+          cache-dependency-path: 'database-agent/requirements*.txt'
 
       - name: Install dependencies
         working-directory: database-agent
         run: |
-          make -f ../Makefile.common venv
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+          pip install -e .
 
       - name: Cache dependencies
         uses: actions/cache/save@v4
         with:
           path: database-agent/.venv
-          key: ${{ runner.os }}-database-agent-venv-${{ hashFiles('database-agent/requirements.txt') }}
+          key: ${{ runner.os }}-database-agent-venv-${{ hashFiles('database-agent/requirements*.txt') }}
 
   setup-github-agent:
     runs-on: ubuntu-latest
@@ -60,18 +61,15 @@ jobs:
         with:
           python-version: '3.11'
           cache: 'pip'
-          cache-dependency-path: 'github-agent/requirements.txt'
+          cache-dependency-path: 'github-agent/requirements*.txt'
 
       - name: Install dependencies
         working-directory: github-agent
         run: |
-          make -f ../Makefile.common venv
-
-      - name: Cache dependencies
-        uses: actions/cache/save@v4
-        with:
-          path: github-agent/.venv
-          key: ${{ runner.os }}-github-agent-venv-${{ hashFiles('github-agent/requirements.txt') }}
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+          pip install -e .
 
   database-agent-checks:
     needs: setup-database-agent
@@ -89,31 +87,25 @@ jobs:
         with:
           python-version: '3.11'
           cache: 'pip'
-          cache-dependency-path: 'database-agent/requirements.txt'
+          cache-dependency-path: 'database-agent/requirements*.txt'
 
-      - name: Restore dependencies
-        uses: actions/cache/restore@v4
-        with:
-          path: database-agent/.venv
-          key: ${{ runner.os }}-database-agent-venv-${{ hashFiles('database-agent/requirements.txt') }}
-
-      - name: Run linting and formatting checks
+      - name: Install dependencies
         working-directory: database-agent
         run: |
-          source .venv/bin/activate
-          make -f ../Makefile.common lint-check-all
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+          pip install -e .
 
-      - name: Run type checking
+      - name: Run linting checks
         working-directory: database-agent
         run: |
-          source .venv/bin/activate
-          mypy src
+          ruff check .
 
       - name: Run tests with coverage
         working-directory: database-agent
         run: |
-          source .venv/bin/activate
-          make -f ../Makefile.common test
+          pytest --cov=src --cov-report=xml --cov-fail-under=80
 
   github-agent-checks:
     needs: setup-github-agent
@@ -132,31 +124,21 @@ jobs:
         with:
           python-version: '3.11'
           cache: 'pip'
-          cache-dependency-path: './github-agent/requirements.txt'
+          cache-dependency-path: './github-agent/requirements*.txt'
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+          pip install -r requirements-dev.txt
           pip install -e .
-      - name: Lint with flake8
+      - name: Lint with ruff
         run: |
-          pip install flake8
-          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-      - name: Check formatting with black
-        run: |
-          pip install black
-          black . --check
-      - name: Type check with mypy
-        run: |
-          pip install mypy
-          mypy .
+          ruff check .
       - name: Test with pytest
         env:
           PYTHONPATH: src
         run: |
-          pip install pytest pytest-cov
-          pytest --cov=./ --cov-report=xml
+          pytest --cov=src --cov-report=xml --cov-fail-under=80
 
   test-github-agent:
     runs-on: ubuntu-latest
@@ -178,29 +160,25 @@ jobs:
         with:
           python-version: '3.11'
           cache: 'pip'
-          cache-dependency-path: 'github-agent/requirements.txt'
+          cache-dependency-path: 'github-agent/requirements*.txt'
 
       - name: Install dependencies
         working-directory: github-agent
-        run: make venv
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+          pip install -e .
 
       - name: Run tests with coverage
         working-directory: github-agent
         run: |
-          source .venv/bin/activate
           pytest -v --cov=src --cov-report=term-missing --cov-fail-under=80
-
-      - name: Type check
-        working-directory: github-agent
-        run: |
-          source .venv/bin/activate
-          make type-check
 
       - name: Lint check
         working-directory: github-agent
         run: |
-          source .venv/bin/activate
-          make lint-check-all
+          ruff check .
 
   build-database-agent:
     needs: database-agent-checks

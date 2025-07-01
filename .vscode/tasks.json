@@ -4,9 +4,12 @@
         {
             "label": "Run GitHub Agent Tests",
             "type": "shell",
-            "command": "make",
+            "command": "pytest",
             "args": [
-                "test"
+                "--cov=src",
+                "--cov-report=term-missing",
+                "--cov-fail-under=80",
+                "-v"
             ],
             "options": {
                 "cwd": "${workspaceFolder}/github-agent"
@@ -28,9 +31,12 @@
         {
             "label": "Run Database Agent Tests",
             "type": "shell",
-            "command": "make",
+            "command": "pytest",
             "args": [
-                "test"
+                "--cov=src",
+                "--cov-report=term-missing",
+                "--cov-fail-under=80",
+                "-v"
             ],
             "options": {
                 "cwd": "${workspaceFolder}/database-agent"
@@ -137,9 +143,10 @@
         {
             "label": "Lint GitHub Agent",
             "type": "shell",
-            "command": "flake8",
+            "command": "ruff",
             "args": [
-                "src/"
+                "check",
+                "."
             ],
             "options": {
                 "cwd": "${workspaceFolder}/github-agent"
@@ -154,7 +161,7 @@
                 "clear": false
             },
             "problemMatcher": {
-                "owner": "flake8",
+                "owner": "ruff",
                 "fileLocation": "relative",
                 "pattern": {
                     "regexp": "^(.+):(\\d+):(\\d+): (\\w\\d+) (.+)$",
@@ -163,46 +170,16 @@
                     "column": 3,
                     "code": 4,
                     "message": 5
-                }
-            }
-        },
-        {
-            "label": "Type Check GitHub Agent",
-            "type": "shell",
-            "command": "mypy",
-            "args": [
-                "src/"
-            ],
-            "options": {
-                "cwd": "${workspaceFolder}/github-agent"
-            },
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": false
-            },
-            "problemMatcher": {
-                "owner": "mypy",
-                "fileLocation": "relative",
-                "pattern": {
-                    "regexp": "^(.+):(\\d+): (error|warning|note): (.+)$",
-                    "file": 1,
-                    "line": 2,
-                    "severity": 3,
-                    "message": 4
                 }
             }
         },
         {
             "label": "Lint Database Agent",
             "type": "shell",
-            "command": "flake8",
+            "command": "ruff",
             "args": [
-                "src/"
+                "check",
+                "."
             ],
             "options": {
                 "cwd": "${workspaceFolder}/database-agent"
@@ -217,7 +194,7 @@
                 "clear": false
             },
             "problemMatcher": {
-                "owner": "flake8",
+                "owner": "ruff",
                 "fileLocation": "relative",
                 "pattern": {
                     "regexp": "^(.+):(\\d+):(\\d+): (\\w\\d+) (.+)$",
@@ -226,37 +203,6 @@
                     "column": 3,
                     "code": 4,
                     "message": 5
-                }
-            }
-        },
-        {
-            "label": "Type Check Database Agent",
-            "type": "shell",
-            "command": "mypy",
-            "args": [
-                "src/"
-            ],
-            "options": {
-                "cwd": "${workspaceFolder}/database-agent"
-            },
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": false
-            },
-            "problemMatcher": {
-                "owner": "mypy",
-                "fileLocation": "relative",
-                "pattern": {
-                    "regexp": "^(.+):(\\d+): (error|warning|note): (.+)$",
-                    "file": 1,
-                    "line": 2,
-                    "severity": 3,
-                    "message": 4
                 }
             }
         },
@@ -305,6 +251,85 @@
             },
             "isBackground": true,
             "problemMatcher": []
+        },
+        {
+            "label": "Run All Tests",
+            "type": "shell",
+            "command": "pytest",
+            "args": [
+                "--cov=github-agent/src,database-agent/src",
+                "--cov-report=term-missing",
+                "--cov-fail-under=80",
+                "-v"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Install Dependencies",
+            "type": "shell",
+            "command": "bash",
+            "args": [
+                "-c",
+                "pip install --upgrade pip && pip install -r database-agent/requirements.txt -r database-agent/requirements-dev.txt -r github-agent/requirements.txt -r github-agent/requirements-dev.txt && pip install -e database-agent/ -e github-agent/"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Lint All",
+            "type": "shell",
+            "command": "ruff",
+            "args": [
+                "check",
+                "."
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": {
+                "owner": "ruff",
+                "fileLocation": "relative",
+                "pattern": {
+                    "regexp": "^(.+):(\\d+):(\\d+): (\\w\\d+) (.+)$",
+                    "file": 1,
+                    "line": 2,
+                    "column": 3,
+                    "code": 4,
+                    "message": 5
+                }
+            }
         }
     ]
 }

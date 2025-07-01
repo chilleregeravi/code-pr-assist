@@ -1,7 +1,8 @@
 import logging
-from typing import List, Optional
 
 import requests
+from openai import APIError, APITimeoutError, OpenAI, OpenAIError, RateLimitError
+
 from github_agent.config import (
     LLM_PROVIDER,
     OLLAMA_MODEL,
@@ -9,12 +10,11 @@ from github_agent.config import (
     OPENAI_API_KEY,
     OPENAI_MODEL,
 )
-from openai import APIError, APITimeoutError, OpenAI, OpenAIError, RateLimitError
 
 logger = logging.getLogger(__name__)
 
 # Initialize OpenAI client globally
-_openai_client: Optional[OpenAI] = None
+_openai_client: OpenAI | None = None
 
 
 def _get_openai_client() -> OpenAI:
@@ -28,7 +28,7 @@ def _get_openai_client() -> OpenAI:
     return _openai_client
 
 
-def gpt_summarize_with_context(pr_text: str, similar_contexts: List[str]) -> str:
+def gpt_summarize_with_context(pr_text: str, similar_contexts: list[str]) -> str:
     """Summarize PR and suggest labels using OpenAI GPT or Ollama with context."""
     # Truncate PR text if too long (max ~2000 tokens, roughly 8000 chars)
     if len(pr_text) > 7000:
@@ -93,7 +93,7 @@ New PR:
             )
             resp.raise_for_status()
             data = resp.json()
-            if "choices" in data and data["choices"]:
+            if data.get("choices"):
                 content = data["choices"][0]["message"]["content"]
                 if not content:
                     return "[Error: Empty response from LLM.]"
