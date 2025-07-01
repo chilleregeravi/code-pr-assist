@@ -1,6 +1,6 @@
 version: 2
 updates:
-  # Enable version updates for database-agent
+  # Enable version updates for database-agent (includes both main and dev dependencies)
   - package-ecosystem: "pip"
     directory: "/database-agent"
     schedule:
@@ -36,7 +36,7 @@ updates:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
 
-  # Enable version updates for github-agent
+  # Enable version updates for github-agent (includes both main and dev dependencies)
   - package-ecosystem: "pip"
     directory: "/github-agent"
     schedule:

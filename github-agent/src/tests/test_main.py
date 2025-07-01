@@ -11,21 +11,20 @@ logger = logging.getLogger(__name__)
 logger.info("Starting test file")
 
 # Mock OpenAI and Qdrant before importing app
-with patch("github_agent.agents.embedding_agent.OpenAI") as mock_openai_class, patch(
-    "github_agent.agents.llm_agent.OpenAI"
-) as mock_openai_llm_class, patch(
-    "github_agent.llm_utils.OpenAI"
-) as mock_openai_utils_class, patch(
-    "github_agent.agents.embedding_agent.QdrantClient"
-) as mock_qdrant, patch.dict(
-    "os.environ",
-    {
-        "OPENAI_API_KEY": "test-key",
-        "GITHUB_TOKEN": "test-token",
-        "REPO_NAME": "test/repo",
-    },
+with (
+    patch("github_agent.agents.embedding_agent.OpenAI") as mock_openai_class,
+    patch("github_agent.agents.llm_agent.OpenAI") as mock_openai_llm_class,
+    patch("github_agent.llm_utils.OpenAI") as mock_openai_utils_class,
+    patch("github_agent.agents.embedding_agent.QdrantClient") as mock_qdrant,
+    patch.dict(
+        "os.environ",
+        {
+            "OPENAI_API_KEY": "test-key",
+            "GITHUB_TOKEN": "test-token",
+            "REPO_NAME": "test/repo",
+        },
+    ),
 ):
-
     # Setup OpenAI client mock with embeddings and chat completions
     mock_client = Mock()
     mock_chat_response_obj = Mock()
@@ -73,23 +72,21 @@ def mock_agents():
     mock_embed_client.chat.completions.create.return_value = mock_chat_response
 
     # First patch configuration values and clients
-    with patch.dict(
-        "os.environ",
-        {
-            "OPENAI_API_KEY": "test_key",
-            "GITHUB_TOKEN": "test_token",
-            "REPO_NAME": "test/repo",
-        },
-    ), patch("github_agent.main.embedding_agent") as mock_embedding_agent, patch(
-        "github_agent.main.llm_agent"
-    ) as mock_llm_agent, patch(
-        "github_agent.main.github_agent"
-    ) as mock_github_agent, patch(
-        "github_agent.github_utils.get_repo"
-    ) as mock_get_repo, patch(
-        "github_agent.main.logger"
+    with (
+        patch.dict(
+            "os.environ",
+            {
+                "OPENAI_API_KEY": "test_key",
+                "GITHUB_TOKEN": "test_token",
+                "REPO_NAME": "test/repo",
+            },
+        ),
+        patch("github_agent.main.embedding_agent") as mock_embedding_agent,
+        patch("github_agent.main.llm_agent") as mock_llm_agent,
+        patch("github_agent.main.github_agent") as mock_github_agent,
+        patch("github_agent.github_utils.get_repo") as mock_get_repo,
+        patch("github_agent.main.logger"),
     ):
-
         # Setup embedding agent mock
         mock_embedding_agent.embed.return_value = np.array([0.1] * 1536)
         mock_embedding_agent.search_similar.return_value = [

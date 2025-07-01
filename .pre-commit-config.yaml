@@ -1,71 +1,41 @@
 repos:
-  # Black code formatting
+  # Basic file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: debug-statements
+
+  # Code formatting (Black)
   - repo: https://github.com/psf/black
-    rev: 24.10.0
+    rev: 25.1.0
     hooks:
       - id: black
-        args: [--check, --diff]
-        files: ^(github-agent|database-agent)/.*\.py$
+        language_version: python3.11
 
-  # isort import sorting
+  # Import sorting (isort)
   - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
+    rev: 6.0.1
     hooks:
       - id: isort
-        args: [--check-only, --diff]
-        files: ^(github-agent|database-agent)/.*\.py$
+        args: ["--profile", "black"]
 
-  # flake8 linting
-  - repo: https://github.com/pycqa/flake8
-    rev: 7.1.1
+  # Linting (Ruff) - but disable import sorting and formatting
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.10
     hooks:
-      - id: flake8
-        files: ^(github-agent|database-agent)/.*\.py$
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+        # Skip ruff-format since we use black
 
-  # mypy type checking (commented out for simpler setup)
-  # - repo: https://github.com/pre-commit/mirrors-mypy
-  #   rev: v1.11.2
-  #   hooks:
-  #     - id: mypy
-  #       files: ^github-agent/.*\.py$
-  #       additional_dependencies: [types-requests]
-  #       args: [--config-file=mypy.ini]
-
-  # GitHub Agent Tests
-  - repo: local
+  # Security checking (Bandit)
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.10
     hooks:
-      - id: github-agent-tests
-        name: GitHub Agent Tests
-        entry: bash -c 'cd github-agent && source .venv/bin/activate && make test'
-        language: system
-        files: ^github-agent/.*\.py$
-        pass_filenames: false
-
-  # Database Agent Tests (when available)
-  - repo: local
-    hooks:
-      - id: database-agent-tests
-        name: Database Agent Tests
-        entry: bash -c 'cd database-agent && if [ -f Makefile ]; then source .venv/bin/activate && make test; else echo "Database agent tests not configured yet"; fi'
-        language: system
-        files: ^database-agent/.*\.py$
-        pass_filenames: false
-
-  # General hooks
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
-    hooks:
-      # Check for merge conflicts
-      - id: check-merge-conflict
-      # Check YAML syntax
-      - id: check-yaml
-      # Check for large files
-      - id: check-added-large-files
-        args: [--maxkb=1000]
-      # Check for Python syntax errors
-      - id: check-ast
-      # Trim trailing whitespace
-      - id: trailing-whitespace
-      # Ensure files end with newline
-      - id: end-of-file-fixer
-        exclude: \.png$|\.jpg$|\.jpeg$|\.gif$|\.svg$
+      - id: bandit
+        args: ["-c", "pyproject.toml"]
+        additional_dependencies: ["bandit[toml]"]

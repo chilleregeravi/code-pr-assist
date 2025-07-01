@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
+
 from database_agent.vector_store import (
     ConfigurationError,
     ConnectionError,
@@ -20,9 +21,10 @@ def store():
 
 
 def test_initialize_success():
-    with patch("database_agent.vector_store.QdrantClient") as mock_client, patch(
-        "database_agent.vector_store.SentenceTransformer"
-    ) as mock_model:
+    with (
+        patch("database_agent.vector_store.QdrantClient") as mock_client,
+        patch("database_agent.vector_store.SentenceTransformer") as mock_model,
+    ):
         mock_instance = mock_client.return_value
         mock_model_instance = mock_model.return_value
         mock_model_instance.get_sentence_embedding_dimension.return_value = 3
