@@ -17,7 +17,7 @@ jobs:
     steps:
       - name: Get Dependabot metadata
         id: metadata
-        uses: dependabot/fetch-metadata@v2.2.0
+        uses: dependabot/fetch-metadata@v2.4.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -46,7 +46,7 @@ jobs:
           gh pr merge --auto --squash "${{ github.event.pull_request.html_url }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+          
       - name: Comment on major updates
         if: steps.flags.outputs.is_major == 'true'
         run: |
