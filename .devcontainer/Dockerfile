@@ -1,7 +1,7 @@
 # For use with GitHub Codespaces and Cursor
 # See https://containers.dev/ for full reference
 
-FROM mcr.microsoft.com/devcontainers/python:3.11
+FROM mcr.microsoft.com/devcontainers/python:3.14
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
